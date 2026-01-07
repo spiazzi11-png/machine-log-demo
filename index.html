@@ -17,7 +17,7 @@
     .row { display:flex; gap:12px; flex-wrap:wrap; }
     .col { flex:1; min-width: 220px; }
     label { display:block; font-size: 12px; color:var(--g); margin: 0 0 6px; }
-    input, select { width: 100%; box-sizing:border-box; padding:10px 12px; border:1px solid #ddd; border-radius:12px; font-size:14px; background:#fff; }
+    input { width: 100%; box-sizing:border-box; padding:10px 12px; border:1px solid #ddd; border-radius:12px; font-size:14px; background:#fff; }
     button { padding:10px 12px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:700; }
     button.primary { border:0; background:#111; color:#fff; }
     .btnrow { display:flex; gap:10px; flex-wrap:wrap; }
@@ -26,10 +26,8 @@
     table { width:100%; border-collapse:collapse; }
     th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--l); font-size: 13px; vertical-align:top; }
     th { color:var(--g); font-weight:700; font-size:12px; }
-    .smalllink { border:0; background:transparent; text-decoration:underline; cursor:pointer; font-size:12px; opacity:0.75; padding:0; }
     .badge { display:inline-block; font-size:11px; padding:4px 8px; border:1px solid var(--l); border-radius:999px; background:#fff; color:var(--g); }
-    .notice { padding:10px 12px; border:1px solid var(--l); background:#fff; border-radius:12px; }
-    .hidden { display:none !important; }
+    .smalllink { border:0; background:transparent; text-decoration:underline; cursor:pointer; font-size:12px; opacity:0.75; padding:0; }
   </style>
 </head>
 <body>
@@ -47,58 +45,8 @@
       </div>
     </div>
 
-    <!-- QR Assignment Panel -->
-    <div class="card hidden" id="qrAssignPanel">
-      <div style="font-weight:800; margin-bottom:6px;">Label this QR code</div>
-      <div class="muted" id="qrIdLine" style="margin-bottom:12px;"></div>
-
-      <div class="row">
-        <div class="col">
-          <label>Select machine type</label>
-          <select id="machineSelect"></select>
-        </div>
-        <div class="col">
-          <label>Optional machine # (1–3)</label>
-          <select id="machineNum">
-            <option value="">(none)</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="btnrow" style="margin-top:12px;">
-        <button class="primary" id="saveQrLabelBtn" type="button">Save Label</button>
-        <button id="cancelQrLabelBtn" type="button">Not now</button>
-      </div>
-
-      <div class="muted" style="margin-top:10px;">
-        Note: This label is saved on <b>your phone only</b> (no account / no server).
-      </div>
-    </div>
-
-    <div class="card hidden" id="relabelWrap">
-      <div class="row" style="align-items:center;">
-        <div class="col">
-          <div class="muted">Need to fix the label for this QR on your phone?</div>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <button id="relabelBtn" type="button">Change machine label</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Logging UI -->
-    <div class="card" id="logCard">
+    <div class="card">
       <div class="row" style="align-items:flex-end;">
-        <div class="col">
-          <label>Exercise (multi-use equipment only)</label>
-          <select id="exerciseSelect"></select>
-          <input id="exerciseCustom" class="hidden" placeholder="Type your exercise (e.g., DB Incline Press)" style="margin-top:10px;" />
-          <div class="muted" id="exerciseHint" style="margin-top:8px;"></div>
-        </div>
-
         <div class="col">
           <label>Date</label>
           <input id="dateInput" type="date" />
@@ -122,7 +70,7 @@
 
       <div class="btnrow" style="margin-top:12px;">
         <button class="primary" id="saveSetBtn" type="button">Save Entry</button>
-        <button id="clearHistoryBtn" type="button">Clear History (this exercise)</button>
+        <button id="clearHistoryBtn" type="button">Clear History (this machine)</button>
       </div>
 
       <div class="hr"></div>
@@ -137,7 +85,6 @@
           <thead>
             <tr>
               <th style="min-width:105px;">Date</th>
-              <th>Exercise</th>
               <th style="min-width:85px;">Weight</th>
               <th style="min-width:70px;">Sets</th>
               <th style="min-width:70px;">Reps</th>
@@ -145,7 +92,7 @@
             </tr>
           </thead>
           <tbody id="historyBody">
-            <tr><td colspan="6" class="muted">No entries yet.</td></tr>
+            <tr><td colspan="5" class="muted">No entries yet.</td></tr>
           </tbody>
         </table>
       </div>
@@ -153,15 +100,14 @@
 
     <div class="card">
       <div class="muted">
-        Tip: If you want “blank QR stickers,” use links like:
-        <span class="badge">?qr=ABC123</span>
-        (the first scan labels it on that phone).
+        Use machine QR links like:
+        <span class="badge">?machine=SHPR-001</span>
       </div>
     </div>
   </div>
 
 <script>
-/* ---------------- Utilities ---------------- */
+/* ---------- Utilities ---------- */
 function getQueryParam(name) {
   const url = new URL(window.location.href);
   return url.searchParams.get(name);
@@ -174,19 +120,17 @@ function todayISO() {
   return `${yyyy}-${mm}-${dd}`;
 }
 function nowReadable() {
-  const d = new Date();
-  return d.toLocaleString();
+  return new Date().toLocaleString();
 }
 function safeJSONParse(s, fallback) {
   try { return JSON.parse(s); } catch { return fallback; }
 }
 
-/* ---------------- User ID (device-local) ---------------- */
+/* ---------- User ID (device-local) ---------- */
 const USER_KEY = 'scanliftlog_user_v1';
 function getOrCreateUserId() {
   let id = localStorage.getItem(USER_KEY);
   if (!id) {
-    // lightweight pseudo-UUID
     id = 'u_' + Math.random().toString(16).slice(2) + Date.now().toString(16);
     localStorage.setItem(USER_KEY, id);
   }
@@ -197,7 +141,7 @@ function resetUser() {
   location.reload();
 }
 
-/* ---------------- Machine Map ---------------- */
+/* ---------- Machine Map ---------- */
 const MACHINE_MAP = {
   // ---- Chest ----
   "CHPR-001": "Flat Chest Press — Machine 1",
@@ -408,371 +352,45 @@ const MACHINE_MAP = {
   "ROW-003": "Rower — Unit 3"
 };
 
-/* ---------------- Multi-use equipment rules ----------------
-   You said: Benches and Squat Rack are multi-use.
-   We'll treat these prefixes as multi-use:
-*/
-const MULTI_USE_PREFIXES = [
-  "DBRCK", // dumbbell area
-  "SMTH",  // smith machine
-  "SQRK",  // squat rack
-  "PWRK",  // power rack
-  "FBEN", "IBEN", "DBEN", // benches
-  "CAB",   // cable stations (CABFLY/CABCRL/CABPD/CABAB)
-];
-
-/* Suggested exercise lists by family */
-const EXERCISE_SUGGESTIONS = {
-  DUMBBELL: [
-    "DB Bench Press", "DB Incline Press", "DB Shoulder Press", "DB Row",
-    "DB Curl", "Hammer Curl", "Lateral Raise", "RDL (Dumbbells)",
-    "Goblet Squat", "Walking Lunge", "Shrugs", "Calf Raise (DB)"
-  ],
-  SMITH: [
-    "Smith Squat", "Smith Bench Press", "Smith Incline Press", "Smith Shoulder Press",
-    "Smith RDL", "Smith Lunge", "Smith Calf Raise", "Hip Thrust (Smith)"
-  ],
-  RACK: [
-    "Back Squat", "Front Squat", "Overhead Press", "Bench Press",
-    "Good Morning", "Rack Pull", "Barbell Row", "Lunge"
-  ],
-  BENCH: [
-    "Bench Press", "Incline Press", "Decline Press", "DB Bench Press",
-    "Skull Crushers", "Chest Supported Row", "Step-Ups", "Hip Thrust"
-  ],
-  CABLE: [
-    "Triceps Pushdown", "Cable Curl", "Face Pull", "Lat Pulldown",
-    "Seated Cable Row", "Cable Fly", "Cable Lateral Raise", "Pull-Through",
-    "Pallof Press", "Cable Crunch"
-  ],
-  DEFAULT: ["Custom…"]
-};
-
-function isMultiUseMachineCode(machineCode) {
-  if (!machineCode) return false;
-  const prefix = String(machineCode).split("-")[0].toUpperCase();
-  return MULTI_USE_PREFIXES.includes(prefix) || MULTI_USE_PREFIXES.some(p => prefix.startsWith(p));
-}
-
-function machineFamilyFromCode(machineCode) {
-  const prefix = String(machineCode || "").split("-")[0].toUpperCase();
-  if (prefix === "DBRCK") return "DUMBBELL";
-  if (prefix === "SMTH") return "SMITH";
-  if (prefix === "SQRK" || prefix === "PWRK") return "RACK";
-  if (prefix === "FBEN" || prefix === "IBEN" || prefix === "DBEN") return "BENCH";
-  if (prefix.startsWith("CAB")) return "CABLE";
-  return "DEFAULT";
-}
-
-/* ---------------- QR mapping (device-local) ---------------- */
-const QR_MAP_KEY = 'scanliftlog_qrmap_v2'; // v2 because we now store machineCode too
-function loadQrMap() {
-  return safeJSONParse(localStorage.getItem(QR_MAP_KEY) || "{}", {});
-}
-function saveQrMap(obj) {
-  localStorage.setItem(QR_MAP_KEY, JSON.stringify(obj));
-}
-
-/* ---------------- Exercise last-used per machine (device-local) ---------------- */
-function lastExerciseKey(userId, machineKey) {
-  return `scanliftlog_last_ex_v1:${userId}:${machineKey}`;
-}
-function setLastExercise(userId, machineKey, exName) {
-  localStorage.setItem(lastExerciseKey(userId, machineKey), exName);
-}
-function getLastExercise(userId, machineKey) {
-  return localStorage.getItem(lastExerciseKey(userId, machineKey)) || "";
-}
-
-/* ---------------- Workout logs storage ----------------
-   Stored per: userId + machineKey + exerciseKey
-*/
-function logsStorageKey(userId, machineKey, exerciseKey) {
-  return `scanliftlog_logs_v1:${userId}:${machineKey}:${exerciseKey}`;
-}
-function loadLogs(userId, machineKey, exerciseKey) {
-  return safeJSONParse(localStorage.getItem(logsStorageKey(userId, machineKey, exerciseKey)) || "[]", []);
-}
-function saveLogs(userId, machineKey, exerciseKey, arr) {
-  localStorage.setItem(logsStorageKey(userId, machineKey, exerciseKey), JSON.stringify(arr));
-}
-
-/* ---------------- Build machine dropdown (for QR labeling) ---------------- */
-function buildMachineSelect() {
-  const sel = document.getElementById('machineSelect');
-  sel.innerHTML = "";
-
-  const placeholder = document.createElement('option');
-  placeholder.value = "";
-  placeholder.textContent = "Choose a machine…";
-  placeholder.disabled = true;
-  placeholder.selected = true;
-  sel.appendChild(placeholder);
-
-  // Sort by display name
-  const codes = Object.keys(MACHINE_MAP).sort((a,b) => {
-    const A = MACHINE_MAP[a], B = MACHINE_MAP[b];
-    return A.localeCompare(B);
-  });
-
-  for (const code of codes) {
-    const opt = document.createElement('option');
-    opt.value = code;
-    opt.textContent = MACHINE_MAP[code];
-    sel.appendChild(opt);
-  }
-}
-
-/* ---------------- Exercise selector UI ---------------- */
-function buildExerciseSelect(isMultiUse, family, lastUsed) {
-  const sel = document.getElementById('exerciseSelect');
-  const customInput = document.getElementById('exerciseCustom');
-  const hint = document.getElementById('exerciseHint');
-
-  sel.innerHTML = "";
-
-  if (!isMultiUse) {
-    // Hide exercise selection, use MAIN bucket
-    sel.classList.add('hidden');
-    customInput.classList.add('hidden');
-    hint.textContent = "This machine is single-use. Exercise selection is not required.";
-    return;
-  }
-
-  sel.classList.remove('hidden');
-
-  // Build options: last used (if any) first, then suggestions, then Custom…
-  const suggestions = (EXERCISE_SUGGESTIONS[family] || EXERCISE_SUGGESTIONS.DEFAULT).slice();
-  if (!suggestions.includes("Custom…")) suggestions.push("Custom…");
-
-  const unique = [];
-  if (lastUsed && !unique.includes(lastUsed)) unique.push(lastUsed);
-  for (const s of suggestions) if (!unique.includes(s)) unique.push(s);
-
-  const placeholder = document.createElement('option');
-  placeholder.value = "";
-  placeholder.textContent = "Choose an exercise…";
-  placeholder.disabled = true;
-  placeholder.selected = true;
-  sel.appendChild(placeholder);
-
-  for (const ex of unique) {
-    const opt = document.createElement('option');
-    opt.value = ex;
-    opt.textContent = ex;
-    sel.appendChild(opt);
-  }
-
-  hint.textContent = "Multi-use equipment: choose what you did so your history stays organized.";
-
-  // Default select last-used if present
-  if (lastUsed) {
-    sel.value = lastUsed;
-    if (lastUsed === "Custom…") {
-      customInput.classList.remove('hidden');
-    } else {
-      customInput.classList.add('hidden');
-    }
-  } else {
-    customInput.classList.add('hidden');
-  }
-
-  sel.onchange = () => {
-    const v = sel.value;
-    if (v === "Custom…") {
-      customInput.classList.remove('hidden');
-      customInput.focus();
-    } else {
-      customInput.classList.add('hidden');
-    }
-    // Re-render history when exercise changes
-    renderAll();
-  };
-
-  customInput.oninput = () => {
-    // Re-render history as they type (so it swaps buckets)
-    renderAll();
-  };
-}
-
-function getSelectedExerciseName(isMultiUse) {
-  if (!isMultiUse) return "MAIN";
-  const sel = document.getElementById('exerciseSelect');
-  const custom = document.getElementById('exerciseCustom');
-
-  const v = (sel.value || "").trim();
-  if (!v) return ""; // not selected yet
-
-  if (v === "Custom…") {
-    const typed = (custom.value || "").trim();
-    return typed ? typed : "";
-  }
-  return v;
-}
-
-function normalizeExerciseKey(exerciseName) {
-  return String(exerciseName).trim().toUpperCase().replace(/\s+/g,'_').replace(/[^A-Z0-9_]/g,'');
-}
-
-/* ---------------- Determine machine context (machine or qr) ---------------- */
+/* ---------- App State ---------- */
 const userId = getOrCreateUserId();
-const qrId = (getQueryParam('qr') || '').trim();
-const machineParam = (getQueryParam('machine') || '').trim().toUpperCase();
+const machineId = (getQueryParam('machine') || 'SHPR-001').trim().toUpperCase();
+const machineName = MACHINE_MAP[machineId] || `Machine (${machineId})`;
 
-let machineKey = null;      // used for logs (QR:XXXX or MACHINECODE)
-let machineCode = null;     // used for multi-use detection and suggestions
-let machineLabel = null;    // displayed in UI
-
-function initMachineContext() {
-  // Case 1: Explicit machine param (original mode)
-  if (machineParam) {
-    machineKey = machineParam;
-    machineCode = machineParam;
-    machineLabel = MACHINE_MAP[machineParam] || `Machine (${machineParam})`;
-    return;
-  }
-
-  // Case 2: QR mode
-  if (qrId) {
-    const qrMap = loadQrMap();
-
-    machineKey = `QR:${qrId}`;
-
-    if (qrMap[qrId] && qrMap[qrId].machineCode && qrMap[qrId].label) {
-      machineCode = qrMap[qrId].machineCode;
-      machineLabel = qrMap[qrId].label;
-      document.getElementById('relabelWrap').classList.remove('hidden');
-      return;
-    }
-
-    // Not labeled yet on this phone → show assignment panel
-    machineCode = null;
-    machineLabel = `Unlabeled QR (${qrId})`;
-
-    const panel = document.getElementById('qrAssignPanel');
-    panel.classList.remove('hidden');
-    document.getElementById('qrIdLine').textContent = `QR ID: ${qrId}`;
-
-    buildMachineSelect();
-
-    document.getElementById('saveQrLabelBtn').onclick = () => {
-      const selectedCode = (document.getElementById('machineSelect').value || "").trim().toUpperCase();
-      const num = (document.getElementById('machineNum').value || "").trim();
-
-      if (!selectedCode) return;
-
-      // If they chose a number, rewrite suffix to 001/002/003 while preserving prefix
-      let finalCode = selectedCode;
-      if (num) {
-        const prefix = selectedCode.split("-")[0];
-        finalCode = `${prefix}-${String(num).padStart(3,'0')}`;
-      }
-
-      const finalLabel = MACHINE_MAP[finalCode] || MACHINE_MAP[selectedCode] || `Machine (${finalCode})`;
-
-      const updated = loadQrMap();
-      updated[qrId] = { machineCode: finalCode, label: finalLabel, updatedAt: new Date().toISOString() };
-      saveQrMap(updated);
-
-      machineCode = finalCode;
-      machineLabel = finalLabel;
-
-      panel.classList.add('hidden');
-      document.getElementById('relabelWrap').classList.remove('hidden');
-
-      renderAll();
-    };
-
-    document.getElementById('cancelQrLabelBtn').onclick = () => {
-      panel.classList.add('hidden');
-      // leave machine as "unlabeled"
-      renderAll();
-    };
-
-    document.getElementById('relabelBtn').onclick = () => {
-      const updated = loadQrMap();
-      delete updated[qrId];
-      saveQrMap(updated);
-      location.reload();
-    };
-
-    return;
-  }
-
-  // Case 3: No params (home)
-  machineKey = "HOME";
-  machineCode = null;
-  machineLabel = "Scan a QR code to begin";
+// Logs are stored per user+machine
+function storageKeyFor(machineId) {
+  return `scanliftlog_logs_v1:${userId}:${machineId}`;
+}
+function loadLogs(machineId) {
+  return safeJSONParse(localStorage.getItem(storageKeyFor(machineId)) || "[]", []);
+}
+function saveLogs(machineId, logs) {
+  localStorage.setItem(storageKeyFor(machineId), JSON.stringify(logs));
 }
 
-/* ---------------- Render + Interactions ---------------- */
-document.getElementById('resetUserBtn').addEventListener('click', resetUser);
+/* ---------- Render ---------- */
 document.getElementById('dateInput').value = todayISO();
+document.getElementById('machinePill').textContent = machineName;
+document.getElementById('userPill').textContent = `User: ${userId.slice(0,8)}…`;
+document.getElementById('historyScopeBadge').textContent = `Scope: ${machineId}`;
 
-function renderPills() {
-  document.getElementById('machinePill').textContent = machineLabel;
-  document.getElementById('userPill').textContent = `User: ${userId.slice(0,8)}…`;
-}
-
-function currentIsMultiUse() {
-  // If machineCode is unknown (unlabeled QR), we treat as single-use until labeled.
-  return machineCode ? isMultiUseMachineCode(machineCode) : false;
-}
-
-function currentFamily() {
-  return machineCode ? machineFamilyFromCode(machineCode) : "DEFAULT";
-}
-
-function renderExerciseUI() {
-  const isMulti = currentIsMultiUse();
-  const fam = currentFamily();
-  const lastUsed = getLastExercise(userId, machineKey);
-
-  buildExerciseSelect(isMulti, fam, lastUsed);
-
-  // If not multi-use, ensure selector is hidden and history is under MAIN
-  if (!isMulti) {
-    document.getElementById('exerciseHint').textContent =
-      (machineKey === "HOME" || machineLabel.startsWith("Unlabeled QR"))
-        ? "Scan a machine QR code to begin."
-        : "This machine is single-use. Exercise selection is not required.";
-  }
-}
+document.getElementById('resetUserBtn').addEventListener('click', resetUser);
 
 function renderHistory() {
   const tbody = document.getElementById('historyBody');
   tbody.innerHTML = "";
 
-  const isMulti = currentIsMultiUse();
-
-  // Determine exercise bucket
-  let exName = isMulti ? getSelectedExerciseName(true) : "MAIN";
-
-  // If multi-use and no exercise selected, show helper row
-  if (isMulti && !exName) {
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">Choose an exercise to view history.</td></tr>`;
-    document.getElementById('historyScopeBadge').textContent = `Scope: ${machineKey} / (select exercise)`;
-    return;
-  }
-
-  const exKey = isMulti ? normalizeExerciseKey(exName) : "MAIN";
-  const logs = loadLogs(userId, machineKey, exKey);
-
-  document.getElementById('historyScopeBadge').textContent = `Scope: ${machineKey} / ${isMulti ? exName : "MAIN"}`;
-
+  const logs = loadLogs(machineId);
   if (!logs.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">No entries yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">No entries yet.</td></tr>`;
     return;
   }
 
-  // Newest first
   const sorted = logs.slice().sort((a,b) => (b.ts||0) - (a.ts||0));
-
   for (const entry of sorted) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${entry.date || ""}</td>
-      <td>${entry.exercise || (isMulti ? exName : "")}</td>
       <td>${entry.weight ?? ""}</td>
       <td>${entry.sets ?? ""}</td>
       <td>${entry.reps ?? ""}</td>
@@ -782,53 +400,30 @@ function renderHistory() {
   }
 }
 
-function clearHistoryForCurrentExercise() {
-  const isMulti = currentIsMultiUse();
-  let exName = isMulti ? getSelectedExerciseName(true) : "MAIN";
-  if (isMulti && !exName) return;
-
-  const exKey = isMulti ? normalizeExerciseKey(exName) : "MAIN";
-  saveLogs(userId, machineKey, exKey, []);
+function clearHistory() {
+  saveLogs(machineId, []);
   renderHistory();
 }
 
-document.getElementById('clearHistoryBtn').addEventListener('click', clearHistoryForCurrentExercise);
+document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
 
 document.getElementById('saveSetBtn').addEventListener('click', () => {
-  // Prevent saving on HOME/unlabeled
-  if (machineKey === "HOME" || machineLabel.startsWith("Unlabeled QR")) return;
-
   const date = (document.getElementById('dateInput').value || todayISO()).trim();
   const weight = (document.getElementById('weightInput').value || "").trim();
   const sets = (document.getElementById('setsInput').value || "").trim();
   const reps = (document.getElementById('repsInput').value || "").trim();
 
-  const isMulti = currentIsMultiUse();
-  let exName = isMulti ? getSelectedExerciseName(true) : "MAIN";
-
-  if (isMulti && !exName) {
-    alert("Please choose an exercise (or select Custom and type one).");
-    return;
-  }
-
-  const exKey = isMulti ? normalizeExerciseKey(exName) : "MAIN";
-
-  const logs = loadLogs(userId, machineKey, exKey);
+  const logs = loadLogs(machineId);
   logs.push({
     ts: Date.now(),
     date,
-    exercise: isMulti ? exName : "",
     weight,
     sets,
     reps,
     savedAt: nowReadable()
   });
-  saveLogs(userId, machineKey, exKey, logs);
+  saveLogs(machineId, logs);
 
-  // Remember last exercise on this machine
-  if (isMulti) setLastExercise(userId, machineKey, exName);
-
-  // Clear inputs for next entry (keep date)
   document.getElementById('weightInput').value = "";
   document.getElementById('setsInput').value = "";
   document.getElementById('repsInput').value = "";
@@ -836,27 +431,7 @@ document.getElementById('saveSetBtn').addEventListener('click', () => {
   renderHistory();
 });
 
-function renderAll() {
-  renderPills();
-  renderExerciseUI();
-  renderHistory();
-
-  // Disable logging fields on HOME/unlabeled
-  const disabled = (machineKey === "HOME" || machineLabel.startsWith("Unlabeled QR"));
-  document.getElementById('saveSetBtn').disabled = disabled;
-  document.getElementById('clearHistoryBtn').disabled = disabled;
-
-  // If disabled, show gentle hint in history
-  if (disabled) {
-    const tbody = document.getElementById('historyBody');
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">Scan a machine QR code (or label this QR) to start logging.</td></tr>`;
-    document.getElementById('historyScopeBadge').textContent = `Scope: ${machineKey}`;
-  }
-}
-
-/* ---------------- Init ---------------- */
-initMachineContext();
-renderAll();
+renderHistory();
 </script>
 </body>
 </html>
