@@ -7,27 +7,43 @@
   <style>
     :root { --b:#111; --g:#666; --l:#e7e7e7; --bg:#fafafa; --card:#fff; }
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--b); }
-    .wrap { max-width: 860px; margin: 0 auto; padding: 18px; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 18px; }
     .top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
     h1 { margin:0; font-size: 20px; letter-spacing: .2px; }
     .sub { margin:6px 0 0; color:var(--g); font-size: 13px; }
     .pills { display:flex; gap:8px; flex-wrap:wrap; }
     .pill { font-size:12px; padding:8px 10px; border:1px solid var(--l); background:#fff; border-radius:999px; }
     .card { margin-top:14px; background:var(--card); border:1px solid var(--l); border-radius:14px; padding:14px; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; }
-    .col { flex:1; min-width: 220px; }
     label { display:block; font-size: 12px; color:var(--g); margin: 0 0 6px; }
     input { width: 100%; box-sizing:border-box; padding:10px 12px; border:1px solid #ddd; border-radius:12px; font-size:14px; background:#fff; }
-    button { padding:10px 12px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:700; }
+    button { padding:10px 12px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; }
     button.primary { border:0; background:#111; color:#fff; }
-    .btnrow { display:flex; gap:10px; flex-wrap:wrap; }
+    button.danger { border:0; background:#b00020; color:#fff; }
+    .btnrow { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .col { flex:1; min-width: 220px; }
     .muted { color:var(--g); font-size:12px; }
     .hr { height:1px; background:var(--l); margin:14px 0; }
+    .smalllink { border:0; background:transparent; text-decoration:underline; cursor:pointer; font-size:12px; opacity:0.75; padding:0; font-weight:700; }
+    .badge { display:inline-block; font-size:11px; padding:4px 8px; border:1px solid var(--l); border-radius:999px; background:#fff; color:var(--g); }
+
+    /* Sets grid */
+    .setsHeader { display:grid; grid-template-columns: 52px 1fr 1fr 60px; gap:10px; align-items:center; margin-top:10px; }
+    .setRow { display:grid; grid-template-columns: 52px 1fr 1fr 60px; gap:10px; align-items:center; margin-top:10px; }
+    .setBadge { display:inline-flex; align-items:center; justify-content:center; width:48px; height:40px; border:1px solid var(--l); border-radius:12px; background:#fff; font-weight:900; }
+    .iconBtn { width:44px; height:40px; border-radius:12px; border:1px solid #ddd; display:inline-flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; background:#fff; }
+    .iconBtn.primary { background:#111; color:#fff; border:0; }
+    .iconBtn.danger { background:#b00020; color:#fff; border:0; }
+
+    /* History */
     table { width:100%; border-collapse:collapse; }
     th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--l); font-size: 13px; vertical-align:top; }
-    th { color:var(--g); font-weight:700; font-size:12px; }
-    .badge { display:inline-block; font-size:11px; padding:4px 8px; border:1px solid var(--l); border-radius:999px; background:#fff; color:var(--g); }
-    .smalllink { border:0; background:transparent; text-decoration:underline; cursor:pointer; font-size:12px; opacity:0.75; padding:0; }
+    th { color:var(--g); font-weight:900; font-size:12px; }
+    details summary { cursor:pointer; font-weight:900; }
+    .setsMini { margin-top:8px; width:100%; border-collapse:collapse; }
+    .setsMini td, .setsMini th { font-size: 12px; padding:6px 6px; border-bottom:1px solid var(--l); }
+    footer { margin:16px 0 6px; text-align:center; color:var(--g); font-size:12px; }
+    footer a { color:inherit; }
   </style>
 </head>
 <body>
@@ -45,38 +61,49 @@
       </div>
     </div>
 
+    <!-- Logger -->
     <div class="card">
       <div class="row" style="align-items:flex-end;">
         <div class="col">
           <label>Date</label>
           <input id="dateInput" type="date" />
         </div>
-      </div>
-
-      <div class="row" style="margin-top:12px;">
         <div class="col">
-          <label>Weight</label>
-          <input id="weightInput" inputmode="decimal" placeholder="e.g., 180" />
+          <label>Notes (optional)</label>
+          <input id="notesInput" placeholder="e.g., controlled reps, last set to failure" />
         </div>
-        <div class="col">
-          <label>Sets</label>
-          <input id="setsInput" inputmode="numeric" placeholder="e.g., 4" />
-        </div>
-        <div class="col">
-          <label>Reps</label>
-          <input id="repsInput" inputmode="numeric" placeholder="e.g., 10" />
-        </div>
-      </div>
-
-      <div class="btnrow" style="margin-top:12px;">
-        <button class="primary" id="saveSetBtn" type="button">Save Entry</button>
-        <button id="clearHistoryBtn" type="button">Clear History (this machine)</button>
       </div>
 
       <div class="hr"></div>
 
+      <div style="font-weight:900;">Sets</div>
+      <div class="muted" style="margin-top:6px;">Use + to add sets. Each set stores weight and reps.</div>
+
+      <div class="setsHeader">
+        <div class="muted">Set</div>
+        <div class="muted">Weight</div>
+        <div class="muted">Reps</div>
+        <div class="muted">Del</div>
+      </div>
+
+      <div id="setsContainer"></div>
+
+      <div class="btnrow" style="margin-top:12px;">
+        <button class="iconBtn primary" id="addSetBtn" type="button">+</button>
+        <div class="muted">Add set</div>
+      </div>
+
+      <div class="btnrow" style="margin-top:14px;">
+        <button class="primary" id="saveWorkoutBtn" type="button">Save Workout</button>
+        <button id="clearCurrentBtn" type="button">Clear Current Sets</button>
+        <button class="danger" id="clearHistoryBtn" type="button">Clear All History (this machine)</button>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
       <div class="row" style="align-items:center; justify-content:space-between;">
-        <div style="font-weight:800;">History</div>
+        <div style="font-weight:900;">History</div>
         <div class="badge" id="historyScopeBadge">Scope: …</div>
       </div>
 
@@ -84,26 +111,29 @@
         <table>
           <thead>
             <tr>
-              <th style="min-width:105px;">Date</th>
-              <th style="min-width:85px;">Weight</th>
+              <th style="min-width:110px;">Date</th>
               <th style="min-width:70px;">Sets</th>
-              <th style="min-width:70px;">Reps</th>
-              <th style="min-width:120px;">Saved</th>
+              <th style="min-width:120px;">Top Set</th>
+              <th>Details</th>
+              <th style="min-width:140px;">Saved</th>
             </tr>
           </thead>
           <tbody id="historyBody">
-            <tr><td colspan="5" class="muted">No entries yet.</td></tr>
+            <tr><td colspan="5" class="muted">No workouts saved yet.</td></tr>
           </tbody>
         </table>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="muted">
-        Use machine QR links like:
+      <div class="muted" style="margin-top:10px;">
+        Example QR link format:
         <span class="badge">?machine=SHPR-001</span>
       </div>
     </div>
+
+    <footer>
+      © <span id="year"></span> ScanLiftLog •
+      <a href="https://spiazzi11-png.github.io/scanliftlog/" target="_blank" rel="noopener">Home</a>
+    </footer>
   </div>
 
 <script>
@@ -125,6 +155,11 @@ function nowReadable() {
 function safeJSONParse(s, fallback) {
   try { return JSON.parse(s); } catch { return fallback; }
 }
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
+}
 
 /* ---------- User ID (device-local) ---------- */
 const USER_KEY = 'scanliftlog_user_v1';
@@ -141,7 +176,13 @@ function resetUser() {
   location.reload();
 }
 
-/* ---------- Machine Map ---------- */
+/* ---------- UI State ---------- */
+const userId = getOrCreateUserId();
+const machineId = (getQueryParam('machine') || 'SHPR-001')
+  .trim()
+  .toUpperCase();
+
+/* ---------- Full Machine Map ---------- */
 const MACHINE_MAP = {
   // ---- Chest ----
   "CHPR-001": "Flat Chest Press — Machine 1",
@@ -330,7 +371,7 @@ const MACHINE_MAP = {
   "DBRCK-002": "Dumbbell Rack — Area 2",
   "DBRCK-003": "Dumbbell Rack — Area 3",
 
-  // ---- Cardio ----
+  // ---- Cardio (optional) ----
   "TRED-001": "Treadmill — Unit 1",
   "TRED-002": "Treadmill — Unit 2",
   "TRED-003": "Treadmill — Unit 3",
@@ -352,85 +393,187 @@ const MACHINE_MAP = {
   "ROW-003": "Rower — Unit 3"
 };
 
-/* ---------- App State ---------- */
-const userId = getOrCreateUserId();
-const machineId = (getQueryParam('machine') || 'SHPR-001').trim().toUpperCase();
 const machineName = MACHINE_MAP[machineId] || `Machine (${machineId})`;
 
-// Logs are stored per user+machine
-function storageKeyFor(machineId) {
-  return `scanliftlog_logs_v1:${userId}:${machineId}`;
+/* Storage: workouts per user+machine */
+function storageKeyFor(mid) {
+  return `scanliftlog_workouts_v1:${userId}:${mid}`;
 }
-function loadLogs(machineId) {
+function loadWorkouts() {
   return safeJSONParse(localStorage.getItem(storageKeyFor(machineId)) || "[]", []);
 }
-function saveLogs(machineId, logs) {
-  localStorage.setItem(storageKeyFor(machineId), JSON.stringify(logs));
+function saveWorkouts(arr) {
+  localStorage.setItem(storageKeyFor(machineId), JSON.stringify(arr));
 }
 
-/* ---------- Render ---------- */
-document.getElementById('dateInput').value = todayISO();
-document.getElementById('machinePill').textContent = machineName;
-document.getElementById('userPill').textContent = `User: ${userId.slice(0,8)}…`;
-document.getElementById('historyScopeBadge').textContent = `Scope: ${machineId}`;
+/* ---------- UI Elements ---------- */
+const setsContainer = document.getElementById('setsContainer');
+const dateInput = document.getElementById('dateInput');
+const notesInput = document.getElementById('notesInput');
 
-document.getElementById('resetUserBtn').addEventListener('click', resetUser);
+/* ---------- Sets UI ---------- */
+function createSetRow(setIndex, weight="", reps="") {
+  const row = document.createElement('div');
+  row.className = 'setRow';
+  row.dataset.index = String(setIndex);
+
+  const badge = document.createElement('div');
+  badge.className = 'setBadge';
+  badge.textContent = String(setIndex + 1);
+
+  const w = document.createElement('input');
+  w.placeholder = 'e.g., 180';
+  w.inputMode = 'decimal';
+  w.value = weight;
+
+  const r = document.createElement('input');
+  r.placeholder = 'e.g., 10';
+  r.inputMode = 'numeric';
+  r.value = reps;
+
+  const del = document.createElement('button');
+  del.className = 'iconBtn danger';
+  del.type = 'button';
+  del.textContent = '−';
+  del.title = 'Remove set';
+  del.onclick = () => {
+    row.remove();
+    renumberSets();
+  };
+
+  row.appendChild(badge);
+  row.appendChild(w);
+  row.appendChild(r);
+  row.appendChild(del);
+  return row;
+}
+
+function renumberSets() {
+  const rows = Array.from(setsContainer.querySelectorAll('.setRow'));
+  rows.forEach((row, i) => {
+    row.dataset.index = String(i);
+    row.querySelector('.setBadge').textContent = String(i + 1);
+  });
+}
+
+function addSet(weight="", reps="") {
+  const idx = setsContainer.querySelectorAll('.setRow').length;
+  setsContainer.appendChild(createSetRow(idx, weight, reps));
+}
+
+function clearCurrentSets() {
+  setsContainer.innerHTML = "";
+  addSet("", "");
+}
+
+/* ---------- Save / History ---------- */
+function readCurrentSets() {
+  const rows = Array.from(setsContainer.querySelectorAll('.setRow'));
+  const sets = rows.map(row => {
+    const inputs = row.querySelectorAll('input');
+    return {
+      weight: (inputs[0].value || "").trim(),
+      reps: (inputs[1].value || "").trim()
+    };
+  }).filter(s => s.weight || s.reps);
+  return sets;
+}
+
+function getTopSet(sets) {
+  let best = null;
+  let bestW = -Infinity;
+  for (const s of sets) {
+    const w = parseFloat(String(s.weight).replace(/[^0-9.]/g,''));
+    if (!Number.isNaN(w) && w > bestW) { bestW = w; best = s; }
+  }
+  return best || sets[0] || null;
+}
 
 function renderHistory() {
   const tbody = document.getElementById('historyBody');
   tbody.innerHTML = "";
 
-  const logs = loadLogs(machineId);
-  if (!logs.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muted">No entries yet.</td></tr>`;
+  const workouts = loadWorkouts();
+  if (!workouts.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">No workouts saved yet.</td></tr>`;
     return;
   }
 
-  const sorted = logs.slice().sort((a,b) => (b.ts||0) - (a.ts||0));
-  for (const entry of sorted) {
+  const sorted = workouts.slice().sort((a,b) => (b.ts||0) - (a.ts||0));
+  for (const w of sorted) {
+    const top = getTopSet(w.sets || []);
+    const topText = top ? `${escapeHtml(top.weight || "—")} x ${escapeHtml(top.reps || "—")}` : "—";
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${entry.date || ""}</td>
-      <td>${entry.weight ?? ""}</td>
-      <td>${entry.sets ?? ""}</td>
-      <td>${entry.reps ?? ""}</td>
-      <td class="muted">${entry.savedAt || ""}</td>
+      <td>${escapeHtml(w.date || "")}</td>
+      <td>${(w.sets||[]).length}</td>
+      <td>${topText}</td>
+      <td>
+        <details>
+          <summary>View sets</summary>
+          ${w.notes ? `<div class="muted" style="margin-top:6px;">Notes: ${escapeHtml(w.notes)}</div>` : ""}
+          <table class="setsMini">
+            <thead><tr><th>Set</th><th>Weight</th><th>Reps</th></tr></thead>
+            <tbody>
+              ${(w.sets||[]).map((s,i)=>`
+                <tr><td>${i+1}</td><td>${escapeHtml(s.weight||"")}</td><td>${escapeHtml(s.reps||"")}</td></tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </details>
+      </td>
+      <td class="muted">${escapeHtml(w.savedAt || "")}</td>
     `;
     tbody.appendChild(tr);
   }
 }
 
-function clearHistory() {
-  saveLogs(machineId, []);
-  renderHistory();
-}
+/* ---------- Wire up ---------- */
+document.getElementById('year').textContent = String(new Date().getFullYear());
+document.getElementById('machinePill').textContent = machineName;
+document.getElementById('userPill').textContent = `User: ${userId.slice(0,8)}…`;
+document.getElementById('historyScopeBadge').textContent = `Scope: ${machineId}`;
+document.getElementById('resetUserBtn').addEventListener('click', resetUser);
 
-document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+dateInput.value = todayISO();
 
-document.getElementById('saveSetBtn').addEventListener('click', () => {
-  const date = (document.getElementById('dateInput').value || todayISO()).trim();
-  const weight = (document.getElementById('weightInput').value || "").trim();
-  const sets = (document.getElementById('setsInput').value || "").trim();
-  const reps = (document.getElementById('repsInput').value || "").trim();
+document.getElementById('addSetBtn').addEventListener('click', () => addSet("", ""));
+document.getElementById('clearCurrentBtn').addEventListener('click', clearCurrentSets);
 
-  const logs = loadLogs(machineId);
-  logs.push({
+document.getElementById('saveWorkoutBtn').addEventListener('click', () => {
+  const date = (dateInput.value || todayISO()).trim();
+  const notes = (notesInput.value || "").trim();
+  const sets = readCurrentSets();
+
+  if (!sets.length) {
+    alert("Add at least one set (weight and/or reps) before saving.");
+    return;
+  }
+
+  const workouts = loadWorkouts();
+  workouts.push({
     ts: Date.now(),
     date,
-    weight,
+    notes,
     sets,
-    reps,
     savedAt: nowReadable()
   });
-  saveLogs(machineId, logs);
+  saveWorkouts(workouts);
 
-  document.getElementById('weightInput').value = "";
-  document.getElementById('setsInput').value = "";
-  document.getElementById('repsInput').value = "";
-
+  notesInput.value = "";
+  clearCurrentSets();
   renderHistory();
 });
 
+document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+  if (!confirm("Clear ALL history for this machine on this device?")) return;
+  saveWorkouts([]);
+  renderHistory();
+});
+
+/* Init */
+clearCurrentSets();
 renderHistory();
 </script>
 </body>
