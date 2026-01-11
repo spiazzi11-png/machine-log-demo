@@ -44,6 +44,18 @@
     .setsMini td, .setsMini th { font-size: 12px; padding:6px 6px; border-bottom:1px solid var(--l); }
     footer { margin:16px 0 6px; text-align:center; color:var(--g); font-size:12px; }
     footer a { color:inherit; }
+
+    /* NEW: Footer download button style */
+    .footerBtn{
+      border:1px solid var(--l);
+      background:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:900;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .footerBtn:hover{ opacity:0.85; }
   </style>
 </head>
 <body>
@@ -138,9 +150,12 @@
       </div>
     </div>
 
+    <!-- UPDATED FOOTER: adds Download button -->
     <footer>
       © <span id="year"></span> ScanLiftLog •
       <a href="https://spiazzi11-png.github.io/scanliftlog/" target="_blank" rel="noopener">Home</a>
+      <span> • </span>
+      <button id="exportBtn" type="button" class="footerBtn">Download My Data</button>
     </footer>
   </div>
 
@@ -328,6 +343,45 @@ function saveWorkouts(arr) {
   localStorage.setItem(storageKeyFor(machineId), JSON.stringify(arr));
 }
 
+/* NEW: Export all machines for this user from localStorage */
+function exportAllDataForUser() {
+  const prefix = `scanliftlog_workouts_v1:${userId}:`;
+
+  const exportObj = {
+    app: "ScanLiftLog",
+    version: "v1",
+    exportedAt: new Date().toISOString(),
+    userId: userId,
+    machines: {}
+  };
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(prefix)) continue;
+
+    const mid = k.slice(prefix.length); // e.g. "DBRCK"
+    const raw = localStorage.getItem(k);
+    exportObj.machines[mid] = safeJSONParse(raw || "[]", []);
+  }
+
+  if (Object.keys(exportObj.machines).length === 0) {
+    alert("No saved workouts found on this device to download yet.");
+    return;
+  }
+
+  const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `scanliftlog_export_${userId.slice(0,8)}_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
 /* ---------- UI Elements ---------- */
 const setsContainer = document.getElementById('setsContainer');
 const dateInput = document.getElementById('dateInput');
@@ -460,6 +514,9 @@ document.getElementById('userPill').textContent = `User: ${userId.slice(0,8)}…
 document.getElementById('historyScopeBadge').textContent = `Scope: ${machineId || "—"}`;
 document.getElementById('resetUserBtn').addEventListener('click', resetUser);
 
+/* NEW: Wire export button */
+document.getElementById('exportBtn').addEventListener('click', exportAllDataForUser);
+
 dateInput.value = todayISO();
 
 document.getElementById('addSetBtn').addEventListener('click', () => addSet("", ""));
@@ -485,6 +542,8 @@ document.getElementById('saveWorkoutBtn').addEventListener('click', () => {
   workouts.push({
     ts: Date.now(),
     date,
+    machineId,
+    machineName,
     exercise,
     notes,
     sets,
