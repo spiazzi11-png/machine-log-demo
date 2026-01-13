@@ -169,6 +169,13 @@
   </div>
 
 <script>
+  function normalizeSlug(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 /* ================================
    IMPORTANT DEPLOYMENT NOTE
    ================================
