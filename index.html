@@ -154,14 +154,6 @@
         </table>
       </div>
 
-      <div class="muted" style="margin-top:10px;">
-        Example QR link formats:
-        <span class="badge">?machine=LEGPR</span>
-        <span class="badge">/m/legpr</span>
-        <span class="badge">https://scanliftlog.com/g/main/m/legpr</span>
-      </div>
-    </div>
-
     <footer>
       © <span id="year"></span> ScanLiftLog •
       <a href="https://spiazzi11-png.github.io/scanliftlog/" target="_blank" rel="noopener">Home</a>
@@ -681,6 +673,8 @@ function addSet(weight="", reps="") {
 
 function clearCurrentSets() {
   setsContainer.innerHTML = "";
+  addSet("", "");
+  addSet("", "");
   addSet("", "");
 }
 
