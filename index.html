@@ -254,7 +254,9 @@ function parseContextFromUrl() {
   }
 
   const gymId = normalizeSlug(gym) || "main";
-  const machineId = machine ? normalizeSlug(machine).toUpperCase() : null;
+const machineId = machine
+  ? normalizeSlug(machine).toUpperCase().slice(0, 5)
+  : null;
 
   return { gymId, machineId };
 }
