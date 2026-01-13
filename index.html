@@ -264,10 +264,8 @@ function parseContextFromUrl() {
     gym = parts[gIndex + 1];
   }
 
-  const gymId = normalizeSlug(gym) || "main";
-const machineId = machine
-  ? normalizeSlug(machine).toUpperCase().slice(0, 5)
-  : null;
+  const gymId = normalizeGymSlug(gym) || "main";
+const machineId = machine ? normalizeMachineId(machine) : null;
 
   return { gymId, machineId };
 }
