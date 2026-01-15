@@ -161,6 +161,77 @@
   </div>
 
 <script>
+
+  /* ---------- Rest Timer ---------- */
+let restTimerInterval = null;
+let restEndTs = null;
+
+function formatMMSS(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const mm = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
+function setRestDisplay(secondsLeft) {
+  const disp = document.getElementById("restCountdownDisplay");
+  if (disp) disp.value = formatMMSS(secondsLeft);
+}
+
+function stopRestTimer() {
+  if (restTimerInterval) clearInterval(restTimerInterval);
+  restTimerInterval = null;
+  restEndTs = null;
+  const status = document.getElementById("restStatus");
+  if (status) status.textContent = "Stopped";
+}
+
+function getRestSecondsSetting() {
+  const inp = document.getElementById("restSecondsInput");
+  const v = inp ? Number(inp.value || 0) : 0;
+  return Number.isFinite(v) ? v : 0;
+}
+
+function startRestTimer(seconds) {
+  const secs = Math.max(0, Number(seconds || 0));
+  if (secs === 0) {
+    stopRestTimer();
+    setRestDisplay(0);
+    const status = document.getElementById("restStatus");
+    if (status) status.textContent = "Ready";
+    return;
+  }
+
+  if (restTimerInterval) clearInterval(restTimerInterval);
+
+  restEndTs = Date.now() + secs * 1000;
+
+  const status = document.getElementById("restStatus");
+  if (status) status.textContent = "Resting…";
+
+  const tick = () => {
+    const msLeft = restEndTs - Date.now();
+    const sLeft = Math.ceil(msLeft / 1000);
+
+    if (sLeft <= 0) {
+      setRestDisplay(0);
+      if (restTimerInterval) clearInterval(restTimerInterval);
+      restTimerInterval = null;
+
+      const status2 = document.getElementById("restStatus");
+      if (status2) status2.textContent = "GO!";
+
+      try { navigator.vibrate && navigator.vibrate([150, 75, 150]); } catch {}
+      return;
+    }
+
+    setRestDisplay(sLeft);
+  };
+
+  tick();
+  restTimerInterval = setInterval(tick, 250);
+}
+
 function normalizeGymSlug(v) {
   return String(v || "")
     .trim()
@@ -622,7 +693,28 @@ const cardioFieldsRow2 = document.getElementById('cardioFieldsRow2');
 let cardioInputs = {}; // { key: HTMLInputElement }
 
 /* ---------- Strength: Sets UI ---------- */
-function createSetRow(setIndex, weight="", reps="") {
+<div class="row" style="align-items:flex-end; margin-top:12px;">
+  <div class="col" style="max-width:200px;">
+    <label>Rest Timer (seconds)</label>
+    <input id="restSecondsInput" type="number" min="0" step="5" value="120" />
+  </div>
+
+  <div class="col" style="max-width:220px;">
+    <label>Countdown</label>
+    <input id="restCountdownDisplay" type="text" value="02:00" readonly />
+  </div>
+
+  <div class="col" style="max-width:260px;">
+    <label>&nbsp;</label>
+    <div class="btnrow">
+      <button class="iconBtn primary" id="restStartBtn" type="button">▶</button>
+      <button class="iconBtn" id="restStopBtn" type="button">■</button>
+      <div class="muted" id="restStatus" style="margin-left:6px;">Ready</div>
+    </div>
+  </div>
+</div>
+  
+  function createSetRow(setIndex, weight="", reps="") {
   const row = document.createElement('div');
   row.className = 'setRow';
   row.dataset.index = String(setIndex);
@@ -640,6 +732,17 @@ function createSetRow(setIndex, weight="", reps="") {
   r.placeholder = 'e.g., 10';
   r.inputMode = 'numeric';
   r.value = reps;
+    
+  function maybeTriggerRest() {
+  if (w.value.trim() || r.value.trim()) {
+    const secs = getRestSecondsSetting();
+    if (secs > 0) startRestTimer(secs);
+  }
+}
+
+w.addEventListener("blur", maybeTriggerRest);
+r.addEventListener("blur", maybeTriggerRest);
+
 
   const del = document.createElement('button');
   del.className = 'iconBtn danger';
