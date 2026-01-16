@@ -50,6 +50,14 @@
 
     /* Cardio container spacing */
     .cardioHeader { font-weight:900; }
+
+    /* Rest status emphasis */
+    #restStatus.go {
+      color:#b00020;
+      font-size:20px;
+      font-weight:900;
+      letter-spacing:.4px;
+    }
   </style>
 </head>
 <body>
@@ -99,11 +107,11 @@
         <div style="font-weight:900;">Sets</div>
         <div class="muted" style="margin-top:6px;">Use + to add sets. Each set stores weight and reps.</div>
 
-        <!-- ✅ Rest Timer UI (MOVED OUT OF SCRIPT, INTO HTML) -->
+        <!-- Rest Timer UI (Strength only) -->
         <div class="row" style="align-items:flex-end; margin-top:12px;">
-          <div class="col" style="max-width:200px;">
+          <div class="col" style="max-width:220px;">
             <label>Rest Timer (seconds)</label>
-            <input id="restSecondsInput" type="number" min="0" step="5" value="60" />
+            <input id="restSecondsInput" type="number" min="0" step="5" value="120" />
           </div>
 
           <div class="col" style="max-width:220px;">
@@ -111,7 +119,7 @@
             <input id="restCountdownDisplay" type="text" value="02:00" readonly />
           </div>
 
-          <div class="col" style="max-width:260px;">
+          <div class="col" style="max-width:320px;">
             <label>&nbsp;</label>
             <div class="btnrow">
               <button class="iconBtn primary" id="restStartBtn" type="button">▶</button>
@@ -175,6 +183,7 @@
           </tbody>
         </table>
       </div>
+    </div>
 
     <footer>
       © <span id="year"></span> ScanLiftLog •
@@ -199,12 +208,18 @@
     if (disp) disp.value = formatMMSS(secondsLeft);
   }
 
+  function setRestStatus(text, isGo=false) {
+    const status = document.getElementById("restStatus");
+    if (!status) return;
+    status.textContent = text;
+    status.classList.toggle("go", !!isGo);
+  }
+
   function stopRestTimer() {
     if (restTimerInterval) clearInterval(restTimerInterval);
     restTimerInterval = null;
     restEndTs = null;
-    const status = document.getElementById("restStatus");
-    if (status) status.textContent = "Stopped";
+    setRestStatus("Stopped", false);
   }
 
   function getRestSecondsSetting() {
@@ -218,17 +233,14 @@
     if (secs === 0) {
       stopRestTimer();
       setRestDisplay(0);
-      const status = document.getElementById("restStatus");
-      if (status) status.textContent = "Ready";
+      setRestStatus("Ready", false);
       return;
     }
 
     if (restTimerInterval) clearInterval(restTimerInterval);
 
     restEndTs = Date.now() + secs * 1000;
-
-    const status = document.getElementById("restStatus");
-    if (status) status.textContent = "Resting…";
+    setRestStatus("Resting…", false);
 
     const tick = () => {
       const msLeft = restEndTs - Date.now();
@@ -239,8 +251,7 @@
         if (restTimerInterval) clearInterval(restTimerInterval);
         restTimerInterval = null;
 
-        const status2 = document.getElementById("restStatus");
-        if (status2) status2.textContent = "GO!";
+        setRestStatus("GO!", true);
 
         try { navigator.vibrate && navigator.vibrate([150, 75, 150]); } catch {}
         return;
@@ -309,6 +320,15 @@
   }
 
   /* ---------- URL Parsing (FIXED + ROBUST) ---------- */
+  /**
+   * Supports:
+   *  - ?machine=LEGPR
+   *  - /m/legpr
+   *  - /g/<gymId>/m/<machineId>
+   *  - optional ?gym=main
+   *
+   * Robust rule: find the LAST "m" segment in the path, so repo base paths never break parsing.
+   */
   function parseContextFromUrl() {
     const url = new URL(window.location.href);
 
@@ -367,27 +387,34 @@
   /* ---------- Gym Map (optional display names) ---------- */
   const GYM_MAP = {
     "main": "ScanLiftLog Test Gym"
+    // Add more display names if you want:
+    // "peters": "Peters Gym",
+    // "smithtown": "Smithtown Fitness"
   };
   const gymName = GYM_MAP[gymId] || gymId.toUpperCase();
 
   /* ---------- Machine Map (expanded) ---------- */
   const MACHINE_MAP = {
+    // Your originals
     "CHPR": "Flat Chest Press",
     "INCHPR": "Incline Chest Press",
     "DECHPR": "Decline Chest Press",
     "PECDK": "Pec Deck / Chest Fly",
     "CABFLY": "Cable Fly (Chest)",
     "SMTH": "Smith Machine",
+
     "SHPR": "Shoulder Press",
     "LATRL": "Lateral Raise",
     "RDLT": "Rear Delt Fly",
     "UPROW": "Upright Row",
+
     "LATPD": "Lat Pulldown",
     "SETRW": "Seated Row",
     "HIRW": "High Row",
     "ASSTPD": "Assisted Pull-Up / Dip",
     "STRPD": "Straight-Arm Pulldown",
     "BKEXT": "Back Extension",
+
     "LEGPR": "Leg Press",
     "HKSQ": "Hack Squat",
     "SQMT": "Squat Machine",
@@ -400,28 +427,34 @@
     "GLUTKB": "Glute Kickback",
     "SCALF": "Seated Calf Raise",
     "STCALF": "Standing Calf Raise",
+
     "PRCUR": "Preacher Curl",
     "BICUR": "Biceps Curl Machine",
     "CABCRL": "Cable Curl Station",
     "TRIEX": "Triceps Extension Machine",
     "DIPMT": "Dip Machine",
     "CABPD": "Cable Pushdown Station",
+
     "ABCR": "Ab Crunch Machine",
     "RTTOR": "Rotary Torso",
     "CAPCH": "Captain’s Chair",
     "DABEN": "Decline Ab Bench",
     "CABAB": "Cable Crunch Station",
+
     "FBEN": "Flat Bench",
     "IBEN": "Incline Bench",
     "DBEN": "Decline Bench",
     "SQRK": "Squat Rack",
     "PWRK": "Power Rack",
     "DBRCK": "Dumbbell Rack",
+
     "TRED": "Treadmill",
     "ELIP": "Elliptical",
     "STAIR": "Stair Climber",
     "BIKE": "Stationary Bike",
     "ROW": "Rower",
+
+    // 50+ additional common gym equipment types
     "CROSS": "Cable Crossover / Functional Trainer",
     "CABLE": "Cable Station (Single)",
     "LATISO": "Iso-Lateral Lat Pulldown",
@@ -433,6 +466,7 @@
     "PULUP": "Pull-Up Bar / Rig",
     "CHINB": "Chin-Up Bar",
     "INVRT": "Inverted Row Station",
+
     "BPBEN": "Barbell Bench Press (Bench)",
     "IBPBN": "Incline Barbell Bench Press (Bench)",
     "DBBEN": "Dumbbell Bench Press (Bench)",
@@ -443,6 +477,7 @@
     "CHDIP": "Chest Dip Machine",
     "OHPRS": "Overhead Press Station",
     "SHRUG": "Shrug Machine",
+
     "GLBRG": "Glute Bridge / Hip Thrust Bench",
     "HIPTH": "Hip Thrust Machine",
     "BLSQT": "Belt Squat Machine",
@@ -453,6 +488,7 @@
     "SLED": "Sled Push Track",
     "LUNGE": "Lunge Station",
     "SQTST": "Squat Stand / Platform",
+
     "HAMMR": "Hammer Strength Curl (Iso)",
     "TRIDP": "Triceps Dip/Press Machine",
     "SKULL": "Skull Crushers Bench Area",
@@ -465,10 +501,12 @@
     "BAND": "Bands / Accessories Station",
     "TRX": "TRX / Suspension Trainer",
     "BOXJM": "Plyo Box Area",
+
     "PLANK": "Plank Station / Mat Area",
     "HANGK": "Hanging Knee Raise Station",
     "ABWHL": "Ab Wheel Area",
     "PALLF": "Pallof Press Station",
+
     "ASSLT": "Air Bike (Assault-Style)",
     "SKIER": "SkiErg",
     "CURVE": "Curved Manual Treadmill",
@@ -490,11 +528,14 @@
 
   /* ---------- Cardio Field Definitions (machine-specific) ---------- */
   function getCardioFieldDefs(mid) {
+    // Field keys stored under w.cardio.{key}
+    // "minutes" is always required for cardio.
     const base = [
       { key: "minutes", label: "Time (minutes)", placeholder: "e.g., 20", inputMode: "numeric", required: true },
       { key: "calories", label: "Calories (optional)", placeholder: "e.g., 220", inputMode: "numeric", required: false }
     ];
 
+    // Helpers
     const distanceMi = { key: "distance", label: "Distance (miles, optional)", placeholder: "e.g., 1.5", inputMode: "decimal", required: false };
     const distanceM = { key: "distance_m", label: "Distance (meters, optional)", placeholder: "e.g., 2000", inputMode: "numeric", required: false };
 
@@ -538,7 +579,25 @@
       return base.concat([ distanceM ]);
     }
 
-    return base.concat([ distanceMi ]);
+    // Fallback
+    return base.concat([distanceMi]);
+  }
+
+  /* ---------- Rest Seconds storage (per gym + machine) ---------- */
+  function restKeyFor(gid, mid) {
+    return `scanliftlog_restseconds_v1:${gid}:${mid}`;
+  }
+  function loadRestSeconds() {
+    if (!machineId) return 120;
+    const raw = localStorage.getItem(restKeyFor(gymId, machineId));
+    const n = raw == null ? null : Number(raw);
+    return (n != null && Number.isFinite(n) && n >= 0) ? n : 120;
+  }
+  function saveRestSeconds(v) {
+    if (!machineId) return;
+    const n = Number(v);
+    if (!Number.isFinite(n) || n < 0) return;
+    localStorage.setItem(restKeyFor(gymId, machineId), String(Math.floor(n)));
   }
 
   /* ---------- Storage: workouts per user+machine ---------- */
@@ -601,6 +660,7 @@
       throw new Error("Invalid file: missing 'data' array.");
     }
 
+    // Filter to only keys we allow importing (safety)
     const incoming = obj.data
       .filter(x => x && typeof x.key === "string")
       .filter(x => x.key === USER_KEY || isWorkoutKey(x.key));
@@ -609,6 +669,7 @@
       throw new Error("No ScanLiftLog data found in this file.");
     }
 
+    // Confirm overwrite if there is existing data
     const existingRelevantKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
@@ -631,12 +692,16 @@
 
     if (!ok) return false;
 
+    // Apply incoming data
     for (const item of incoming) {
       if (item.key === USER_KEY) {
+        // USER_KEY is stored as a plain string
         const v = (typeof item.value === "string") ? item.value : String(item.value || "");
         if (v) localStorage.setItem(USER_KEY, v);
         continue;
       }
+
+      // workout keys stored as JSON strings
       localStorage.setItem(item.key, JSON.stringify(item.value ?? null));
     }
 
@@ -695,12 +760,14 @@
     r.value = reps;
 
     function maybeTriggerRest() {
+      // Only trigger if something was entered
       if (w.value.trim() || r.value.trim()) {
         const secs = getRestSecondsSetting();
         if (secs > 0) startRestTimer(secs);
       }
     }
 
+    // Trigger when the user finishes editing either input
     w.addEventListener("blur", maybeTriggerRest);
     r.addEventListener("blur", maybeTriggerRest);
 
@@ -764,6 +831,7 @@
     cardioFieldsRow2.innerHTML = "";
 
     const defs = getCardioFieldDefs(machineId);
+    // Split defs into two rows for layout
     const row1 = defs.slice(0, Math.ceil(defs.length / 2));
     const row2 = defs.slice(Math.ceil(defs.length / 2));
 
@@ -803,6 +871,7 @@
         return { ok: false, error: `Please enter ${def.label}.` };
       }
 
+      // Store numeric fields as numbers when possible; keep "pace" as string
       if (def.key === "pace") {
         if (raw) data[def.key] = raw;
         continue;
@@ -810,6 +879,7 @@
 
       const num = toNumberOrNull(raw);
       if (raw && num === null) {
+        // If they typed something non-numeric for numeric field
         return { ok: false, error: `Please enter a valid number for ${def.label}.` };
       }
       if (num !== null) data[def.key] = num;
@@ -882,6 +952,7 @@
 
       const tr = document.createElement('tr');
 
+      // Build details section
       let detailsHtml = `<details><summary>View</summary>`;
 
       if (w.exercise) detailsHtml += `<div class="muted" style="margin-top:6px;">Exercise: ${escapeHtml(w.exercise)}</div>`;
@@ -955,18 +1026,11 @@
   document.getElementById('resetUserBtn').addEventListener('click', resetUser);
   document.getElementById('downloadBtn').addEventListener('click', downloadData);
 
-  // ✅ Timer button wiring (ADDED)
-  const restStartBtn = document.getElementById("restStartBtn");
-  const restStopBtn = document.getElementById("restStopBtn");
-  if (restStartBtn) restStartBtn.addEventListener("click", () => startRestTimer(getRestSecondsSetting()));
-  if (restStopBtn) restStopBtn.addEventListener("click", stopRestTimer);
-  setRestDisplay(getRestSecondsSetting());
-
   const uploadBtn = document.getElementById('uploadBtn');
   const uploadFileInput = document.getElementById('uploadFileInput');
 
   uploadBtn.addEventListener('click', () => {
-    uploadFileInput.value = "";
+    uploadFileInput.value = ""; // allow selecting same file twice
     uploadFileInput.click();
   });
 
@@ -989,6 +1053,38 @@
 
   document.getElementById('addSetBtn').addEventListener('click', () => addSet("", ""));
   document.getElementById('clearCurrentBtn').addEventListener('click', clearCurrent);
+
+  // Rest Timer buttons + per-machine persistence
+  const restSecondsInput = document.getElementById("restSecondsInput");
+  const restStartBtn = document.getElementById("restStartBtn");
+  const restStopBtn = document.getElementById("restStopBtn");
+
+  if (restSecondsInput) {
+    const initialRest = loadRestSeconds();
+    restSecondsInput.value = String(initialRest);
+    setRestDisplay(initialRest);
+    setRestStatus("Ready", false);
+
+    restSecondsInput.addEventListener("change", () => {
+      const v = getRestSecondsSetting();
+      saveRestSeconds(v);
+      setRestDisplay(v);
+      setRestStatus("Ready", false);
+      stopRestTimer();
+    });
+  }
+
+  if (restStartBtn) {
+    restStartBtn.addEventListener("click", () => {
+      const secs = getRestSecondsSetting();
+      saveRestSeconds(secs);
+      startRestTimer(secs);
+    });
+  }
+
+  if (restStopBtn) {
+    restStopBtn.addEventListener("click", () => stopRestTimer());
+  }
 
   document.getElementById('saveWorkoutBtn').addEventListener('click', () => {
     if (!machineId) {
@@ -1059,7 +1155,7 @@
   /* Init */
   setModeUI();
   if (machineType !== "cardio") {
-    clearCurrentSets();
+    clearCurrentSets(); // 3 sets on load
   } else {
     clearCardioInputs();
   }
