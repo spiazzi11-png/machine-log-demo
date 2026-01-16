@@ -759,17 +759,16 @@
     r.inputMode = 'numeric';
     r.value = reps;
 
-    function maybeTriggerRest() {
-      // Only trigger if something was entered
-      if (w.value.trim() || r.value.trim()) {
-        const secs = getRestSecondsSetting();
-        if (secs > 0) startRestTimer(secs);
-      }
-    }
+    function maybeTriggerRestOnReps() {
+  if (r.value.trim()) {
+    const secs = getRestSecondsSetting();
+    if (secs > 0) startRestTimer(secs);
+  }
+}
 
-    // Trigger when the user finishes editing either input
-    w.addEventListener("blur", maybeTriggerRest);
-    r.addEventListener("blur", maybeTriggerRest);
+// Trigger as soon as reps are typed (no need to leave the field)
+r.addEventListener("input", maybeTriggerRestOnReps);
+
 
     const del = document.createElement('button');
     del.className = 'iconBtn danger';
