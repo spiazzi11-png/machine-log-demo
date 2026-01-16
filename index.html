@@ -253,7 +253,26 @@
 
         setRestStatus("GO!", true);
 
-        try { navigator.vibrate && navigator.vibrate([150, 75, 150]); } catch {}
+        // Vibrate (mobile)
+try { navigator.vibrate && navigator.vibrate([150, 75, 150]); } catch {}
+
+// Audio beep
+try {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "sine";
+  o.frequency.value = 880; // pitch (Hz)
+  g.gain.value = 0.2;      // volume
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start();
+  setTimeout(() => {
+    o.stop();
+    ctx.close();
+  }, 300); // 300ms beep
+} catch {}
+
         return;
       }
 
