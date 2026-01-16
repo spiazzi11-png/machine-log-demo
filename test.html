@@ -1,1 +1,1182 @@
 
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ScanLiftLog</title>
+  <style>
+    :root { --b:#111; --g:#666; --l:#e7e7e7; --bg:#fafafa; --card:#fff; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--b); }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 18px; }
+    .top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    h1 { margin:0; font-size: 20px; letter-spacing: .2px; }
+    .sub { margin:6px 0 0; color:var(--g); font-size: 13px; }
+    .pills { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill { font-size:12px; padding:8px 10px; border:1px solid var(--l); background:#fff; border-radius:999px; }
+    .card { margin-top:14px; background:var(--card); border:1px solid var(--l); border-radius:14px; padding:14px; }
+    label { display:block; font-size: 12px; color:var(--g); margin: 0 0 6px; }
+    input, select { width: 100%; box-sizing:border-box; padding:10px 12px; border:1px solid #ddd; border-radius:12px; font-size:14px; background:#fff; }
+    button { padding:10px 12px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; }
+    button.primary { border:0; background:#111; color:#fff; }
+    button.danger { border:0; background:#b00020; color:#fff; }
+    .btnrow { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .col { flex:1; min-width: 220px; }
+    .muted { color:var(--g); font-size:12px; }
+    .hr { height:1px; background:var(--l); margin:14px 0; }
+    .smalllink { border:0; background:transparent; text-decoration:underline; cursor:pointer; font-size:12px; opacity:0.75; padding:0; font-weight:700; }
+    .badge { display:inline-block; font-size:11px; padding:4px 8px; border:1px solid var(--l); border-radius:999px; background:#fff; color:var(--g); }
+
+    /* Sets grid */
+    .setsHeader { display:grid; grid-template-columns: 52px 1fr 1fr 60px; gap:10px; align-items:center; margin-top:10px; }
+    .setRow { display:grid; grid-template-columns: 52px 1fr 1fr 60px; gap:10px; align-items:center; margin-top:10px; }
+    .setBadge { display:inline-flex; align-items:center; justify-content:center; width:48px; height:40px; border:1px solid var(--l); border-radius:12px; background:#fff; font-weight:900; }
+    .iconBtn { width:44px; height:40px; border-radius:12px; border:1px solid #ddd; display:inline-flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; background:#fff; }
+    .iconBtn.primary { background:#111; color:#fff; border:0; }
+    .iconBtn.danger { background:#b00020; color:#fff; border:0; }
+
+    /* History */
+    table { width:100%; border-collapse:collapse; }
+    th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--l); font-size: 13px; vertical-align:top; }
+    th { color:var(--g); font-weight:900; font-size:12px; }
+    details summary { cursor:pointer; font-weight:900; }
+    .setsMini { margin-top:8px; width:100%; border-collapse:collapse; }
+    .setsMini td, .setsMini th { font-size: 12px; padding:6px 6px; border-bottom:1px solid var(--l); }
+    footer { margin:16px 0 6px; text-align:center; color:var(--g); font-size:12px; }
+    footer a { color:inherit; }
+
+    /* Tiny helper button inside pills */
+    .pillBtn { border:0; background:transparent; cursor:pointer; font-weight:900; text-decoration:underline; padding:0; font-size:12px; opacity:.85; }
+
+    /* Cardio container spacing */
+    .cardioHeader { font-weight:900; }
+
+    /* Rest status emphasis */
+    #restStatus.go {
+      color:#b00020;
+      font-size:20px;
+      font-weight:900;
+      letter-spacing:.4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>ScanLiftLog</h1>
+        <div class="sub" id="subLine">Scan a machine QR code to view and log your workout history.</div>
+      </div>
+
+      <div class="pills">
+        <div class="pill" id="gymPill">Gym: …</div>
+        <div class="pill" id="machinePill">Loading…</div>
+        <div class="pill" id="userPill">User: …</div>
+        <div class="pill"><button class="pillBtn" id="downloadBtn" type="button">Download Data</button></div>
+        <div class="pill"><button class="pillBtn" id="uploadBtn" type="button">Upload Data</button></div>
+        <input id="uploadFileInput" type="file" accept="application/json,.json" style="display:none;" />
+        <div class="pill"><button class="pillBtn" id="resetUserBtn" type="button">Reset User ID</button></div>
+      </div>
+    </div>
+
+    <!-- Logger -->
+    <div class="card">
+      <div class="row" style="align-items:flex-end;">
+        <div class="col">
+          <label>Date</label>
+          <input id="dateInput" type="date" />
+        </div>
+        <div class="col">
+          <label>Notes (optional)</label>
+          <input id="notesInput" placeholder="e.g., controlled reps, last set to failure" />
+        </div>
+      </div>
+
+      <!-- Exercise field (moved inside card, under Notes) -->
+      <div class="row" style="align-items:flex-end; margin-top:12px;">
+        <div class="col">
+          <label>Exercise (optional)</label>
+          <input id="exerciseInput" placeholder="e.g., Dumbbell Flys, DB Press, Incline DB Row" />
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- Strength (sets) -->
+      <div id="strengthSection">
+        <div style="font-weight:900;">Sets</div>
+        <div class="muted" style="margin-top:6px;">Use + to add sets. Each set stores weight and reps.</div>
+
+        <!-- Rest Timer UI (Strength only) -->
+        <div class="row" style="align-items:flex-end; margin-top:12px;">
+          <div class="col" style="max-width:220px;">
+            <label>Rest Timer (seconds)</label>
+            <input id="restSecondsInput" type="number" min="0" step="5" value="120" />
+          </div>
+
+          <div class="col" style="max-width:220px;">
+            <label>Countdown</label>
+            <input id="restCountdownDisplay" type="text" value="02:00" readonly />
+          </div>
+
+          <div class="col" style="max-width:320px;">
+            <label>&nbsp;</label>
+            <div class="btnrow">
+              <button class="iconBtn primary" id="restStartBtn" type="button">▶</button>
+              <button class="iconBtn" id="restStopBtn" type="button">■</button>
+              <div class="muted" id="restStatus" style="margin-left:6px;">Ready</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setsHeader">
+          <div class="muted">Set</div>
+          <div class="muted">Weight</div>
+          <div class="muted">Reps</div>
+          <div class="muted">Del</div>
+        </div>
+
+        <div id="setsContainer"></div>
+
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="iconBtn primary" id="addSetBtn" type="button">+</button>
+          <div class="muted">Add set</div>
+        </div>
+      </div>
+
+      <!-- Cardio -->
+      <div id="cardioSection" style="display:none;">
+        <div class="cardioHeader">Cardio</div>
+        <div class="muted" style="margin-top:6px;">Log time and machine stats. Minutes is required.</div>
+
+        <div class="row" style="align-items:flex-end; margin-top:12px;" id="cardioFieldsRow1"></div>
+        <div class="row" style="align-items:flex-end; margin-top:12px;" id="cardioFieldsRow2"></div>
+      </div>
+
+      <div class="btnrow" style="margin-top:14px;">
+        <button class="primary" id="saveWorkoutBtn" type="button">Save Workout</button>
+        <button id="clearCurrentBtn" type="button">Clear Current</button>
+        <button class="danger" id="clearHistoryBtn" type="button">Clear All History (this machine)</button>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div style="font-weight:900;">History</div>
+        <div class="badge" id="historyScopeBadge">Scope: …</div>
+      </div>
+
+      <div style="margin-top:10px; overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="min-width:110px;">Date</th>
+              <th style="min-width:70px;">Type</th>
+              <th style="min-width:140px;">Summary</th>
+              <th>Details</th>
+              <th style="min-width:140px;">Saved</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="5" class="muted">No workouts saved yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      © <span id="year"></span> ScanLiftLog •
+      <a href="https://spiazzi11-png.github.io/scanliftlog/" target="_blank" rel="noopener">Home</a>
+    </footer>
+  </div>
+
+<script>
+  /* ---------- Rest Timer ---------- */
+  let restTimerInterval = null;
+  let restEndTs = null;
+
+  function formatMMSS(totalSeconds) {
+    const s = Math.max(0, Math.floor(totalSeconds));
+    const mm = String(Math.floor(s / 60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  }
+
+  function setRestDisplay(secondsLeft) {
+    const disp = document.getElementById("restCountdownDisplay");
+    if (disp) disp.value = formatMMSS(secondsLeft);
+  }
+
+  function setRestStatus(text, isGo=false) {
+    const status = document.getElementById("restStatus");
+    if (!status) return;
+    status.textContent = text;
+    status.classList.toggle("go", !!isGo);
+  }
+
+  function stopRestTimer() {
+    if (restTimerInterval) clearInterval(restTimerInterval);
+    restTimerInterval = null;
+    restEndTs = null;
+    setRestStatus("Stopped", false);
+  }
+
+  function getRestSecondsSetting() {
+    const inp = document.getElementById("restSecondsInput");
+    const v = inp ? Number(inp.value || 0) : 0;
+    return Number.isFinite(v) ? v : 0;
+  }
+
+  function startRestTimer(seconds) {
+    const secs = Math.max(0, Number(seconds || 0));
+    if (secs === 0) {
+      stopRestTimer();
+      setRestDisplay(0);
+      setRestStatus("Ready", false);
+      return;
+    }
+
+    if (restTimerInterval) clearInterval(restTimerInterval);
+
+    restEndTs = Date.now() + secs * 1000;
+    setRestStatus("Resting…", false);
+
+    const tick = () => {
+      const msLeft = restEndTs - Date.now();
+      const sLeft = Math.ceil(msLeft / 1000);
+
+      if (sLeft <= 0) {
+        setRestDisplay(0);
+        if (restTimerInterval) clearInterval(restTimerInterval);
+        restTimerInterval = null;
+
+        setRestStatus("GO!", true);
+
+        // Vibrate (mobile)
+try { navigator.vibrate && navigator.vibrate([150, 75, 150]); } catch {}
+
+// Audio beep
+try {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "sine";
+  o.frequency.value = 880; // pitch (Hz)
+  g.gain.value = 0.2;      // volume
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start();
+  setTimeout(() => {
+    o.stop();
+    ctx.close();
+  }, 300); // 300ms beep
+} catch {}
+
+        return;
+      }
+
+      setRestDisplay(sLeft);
+    };
+
+    tick();
+    restTimerInterval = setInterval(tick, 250);
+  }
+
+  function normalizeGymSlug(v) {
+    return String(v || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  function normalizeMachineId(v) {
+    return String(v || "")
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
+  }
+
+  /* ================================
+     IMPORTANT DEPLOYMENT NOTE
+     ================================
+     For deep links like /m/legpr to work on GitHub Pages, you MUST create 404.html in this repo
+     and paste this exact same file into 404.html as well.
+  */
+
+  /* ---------- Utilities ---------- */
+  function safeJSONParse(s, fallback) {
+    try { return JSON.parse(s); } catch { return fallback; }
+  }
+  function todayISO() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  function nowReadable() {
+    return new Date().toLocaleString();
+  }
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+  function normalizeSlug(v) {
+    return String(v || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+  function toNumberOrNull(v) {
+    const n = parseFloat(String(v || "").replace(/[^0-9.\-]/g, ""));
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /* ---------- URL Parsing (FIXED + ROBUST) ---------- */
+  /**
+   * Supports:
+   *  - ?machine=LEGPR
+   *  - /m/legpr
+   *  - /g/<gymId>/m/<machineId>
+   *  - optional ?gym=main
+   *
+   * Robust rule: find the LAST "m" segment in the path, so repo base paths never break parsing.
+   */
+  function parseContextFromUrl() {
+    const url = new URL(window.location.href);
+
+    // Query params
+    let gym = url.searchParams.get("gym") || "";
+    let machine = url.searchParams.get("machine") || "";
+
+    // Path segments (works for both GH Pages: /scanliftlog/... and bare domain: /...)
+    const parts = url.pathname.split("/").filter(Boolean);
+
+    // Find last "m"
+    let mIndex = -1;
+    for (let i = parts.length - 1; i >= 0; i--) {
+      if (parts[i] === "m") { mIndex = i; break; }
+    }
+    if (!machine && mIndex !== -1 && parts[mIndex + 1]) {
+      machine = parts[mIndex + 1];
+    }
+
+    // Find last "g"
+    let gIndex = -1;
+    for (let i = parts.length - 1; i >= 0; i--) {
+      if (parts[i] === "g") { gIndex = i; break; }
+    }
+    if (!gym && gIndex !== -1 && parts[gIndex + 1]) {
+      gym = parts[gIndex + 1];
+    }
+
+    const gymId = normalizeGymSlug(gym) || "main";
+    const machineId = machine ? normalizeMachineId(machine) : null;
+
+    return { gymId, machineId };
+  }
+
+  /* ---------- User ID (device-local) ---------- */
+  const USER_KEY = 'scanliftlog_user_v1';
+  function getOrCreateUserId() {
+    let id = localStorage.getItem(USER_KEY);
+    if (!id) {
+      id = 'u_' + Math.random().toString(16).slice(2) + Date.now().toString(16);
+      localStorage.setItem(USER_KEY, id);
+    }
+    return id;
+  }
+  function resetUser() {
+    localStorage.removeItem(USER_KEY);
+    location.reload();
+  }
+
+  /* ---------- UI State ---------- */
+  const userId = getOrCreateUserId();
+  const ctx = parseContextFromUrl();
+  const gymId = ctx.gymId;
+  const machineId = ctx.machineId;
+
+  /* ---------- Gym Map (optional display names) ---------- */
+  const GYM_MAP = {
+    "main": "ScanLiftLog Test Gym"
+    // Add more display names if you want:
+    // "peters": "Peters Gym",
+    // "smithtown": "Smithtown Fitness"
+  };
+  const gymName = GYM_MAP[gymId] || gymId.toUpperCase();
+
+  /* ---------- Machine Map (expanded) ---------- */
+  const MACHINE_MAP = {
+    // Your originals
+    "CHPR": "Flat Chest Press",
+    "INCHPR": "Incline Chest Press",
+    "DECHPR": "Decline Chest Press",
+    "PECDK": "Pec Deck / Chest Fly",
+    "CABFLY": "Cable Fly (Chest)",
+    "SMTH": "Smith Machine",
+
+    "SHPR": "Shoulder Press",
+    "LATRL": "Lateral Raise",
+    "RDLT": "Rear Delt Fly",
+    "UPROW": "Upright Row",
+
+    "LATPD": "Lat Pulldown",
+    "SETRW": "Seated Row",
+    "HIRW": "High Row",
+    "ASSTPD": "Assisted Pull-Up / Dip",
+    "STRPD": "Straight-Arm Pulldown",
+    "BKEXT": "Back Extension",
+
+    "LEGPR": "Leg Press",
+    "HKSQ": "Hack Squat",
+    "SQMT": "Squat Machine",
+    "LEGEX": "Leg Extension",
+    "SLCUR": "Seated Leg Curl",
+    "LLCUR": "Lying Leg Curl",
+    "STCUR": "Standing Leg Curl",
+    "HIPAB": "Hip Abductor",
+    "HIPAD": "Hip Adductor",
+    "GLUTKB": "Glute Kickback",
+    "SCALF": "Seated Calf Raise",
+    "STCALF": "Standing Calf Raise",
+
+    "PRCUR": "Preacher Curl",
+    "BICUR": "Biceps Curl Machine",
+    "CABCRL": "Cable Curl Station",
+    "TRIEX": "Triceps Extension Machine",
+    "DIPMT": "Dip Machine",
+    "CABPD": "Cable Pushdown Station",
+
+    "ABCR": "Ab Crunch Machine",
+    "RTTOR": "Rotary Torso",
+    "CAPCH": "Captain’s Chair",
+    "DABEN": "Decline Ab Bench",
+    "CABAB": "Cable Crunch Station",
+
+    "FBEN": "Flat Bench",
+    "IBEN": "Incline Bench",
+    "DBEN": "Decline Bench",
+    "SQRK": "Squat Rack",
+    "PWRK": "Power Rack",
+    "DBRCK": "Dumbbell Rack",
+
+    "TRED": "Treadmill",
+    "ELIP": "Elliptical",
+    "STAIR": "Stair Climber",
+    "BIKE": "Stationary Bike",
+    "ROW": "Rower",
+
+    // 50+ additional common gym equipment types
+    "CROSS": "Cable Crossover / Functional Trainer",
+    "CABLE": "Cable Station (Single)",
+    "LATISO": "Iso-Lateral Lat Pulldown",
+    "LTRW": "Low Row Machine",
+    "TBRW": "T-Bar Row Station",
+    "CHSRW": "Chest-Supported Row",
+    "PLOVR": "Pullover Machine",
+    "FACEP": "Face Pull Station",
+    "PULUP": "Pull-Up Bar / Rig",
+    "CHINB": "Chin-Up Bar",
+    "INVRT": "Inverted Row Station",
+
+    "BPBEN": "Barbell Bench Press (Bench)",
+    "IBPBN": "Incline Barbell Bench Press (Bench)",
+    "DBBEN": "Dumbbell Bench Press (Bench)",
+    "IDBBN": "Incline Dumbbell Bench Press (Bench)",
+    "LANDM": "Landmine Station",
+    "JMPPR": "Jammer Press",
+    "DPPRS": "Dip Station",
+    "CHDIP": "Chest Dip Machine",
+    "OHPRS": "Overhead Press Station",
+    "SHRUG": "Shrug Machine",
+
+    "GLBRG": "Glute Bridge / Hip Thrust Bench",
+    "HIPTH": "Hip Thrust Machine",
+    "BLSQT": "Belt Squat Machine",
+    "VLEG": "Vertical Leg Press",
+    "PENDL": "Pendulum Squat",
+    "SISSY": "Sissy Squat Bench",
+    "GHR": "Glute-Ham Raise (GHD)",
+    "SLED": "Sled Push Track",
+    "LUNGE": "Lunge Station",
+    "SQTST": "Squat Stand / Platform",
+
+    "HAMMR": "Hammer Strength Curl (Iso)",
+    "TRIDP": "Triceps Dip/Press Machine",
+    "SKULL": "Skull Crushers Bench Area",
+    "CLOSEB": "Close-Grip Bench Area",
+    "EZBAR": "EZ Bar Rack",
+    "BBRCK": "Barbell Rack",
+    "PLTRK": "Plate Storage Rack",
+    "KBRCK": "Kettlebell Rack",
+    "MEDBL": "Medicine Ball Rack",
+    "BAND": "Bands / Accessories Station",
+    "TRX": "TRX / Suspension Trainer",
+    "BOXJM": "Plyo Box Area",
+
+    "PLANK": "Plank Station / Mat Area",
+    "HANGK": "Hanging Knee Raise Station",
+    "ABWHL": "Ab Wheel Area",
+    "PALLF": "Pallof Press Station",
+
+    "ASSLT": "Air Bike (Assault-Style)",
+    "SKIER": "SkiErg",
+    "CURVE": "Curved Manual Treadmill",
+    "STEP": "Step Mill / Stepper",
+    "SPIN": "Spin Bike",
+    "ARC": "Arc Trainer"
+  };
+
+  const machineName = machineId
+    ? (MACHINE_MAP[machineId] || `Machine (${machineId})`)
+    : "Scan a machine QR code to begin";
+
+  /* ---------- Machine Type (DEFAULT LIST = CARDIO) ---------- */
+  const CARDIO_MACHINE_IDS = [
+    "TRED","ELIP","STAIR","BIKE","ROW","SKIER","CURVE","STEP","SPIN","ARC","ASSLT"
+  ];
+
+  const machineType = (machineId && CARDIO_MACHINE_IDS.includes(machineId)) ? "cardio" : "strength";
+
+  /* ---------- Cardio Field Definitions (machine-specific) ---------- */
+  function getCardioFieldDefs(mid) {
+    // Field keys stored under w.cardio.{key}
+    // "minutes" is always required for cardio.
+    const base = [
+      { key: "minutes", label: "Time (minutes)", placeholder: "e.g., 20", inputMode: "numeric", required: true },
+      { key: "calories", label: "Calories (optional)", placeholder: "e.g., 220", inputMode: "numeric", required: false }
+    ];
+
+    // Helpers
+    const distanceMi = { key: "distance", label: "Distance (miles, optional)", placeholder: "e.g., 1.5", inputMode: "decimal", required: false };
+    const distanceM = { key: "distance_m", label: "Distance (meters, optional)", placeholder: "e.g., 2000", inputMode: "numeric", required: false };
+
+    if (mid === "TRED" || mid === "CURVE") {
+      return base.concat([
+        distanceMi,
+        { key: "incline", label: "Incline % (optional)", placeholder: "e.g., 6", inputMode: "decimal", required: false },
+        { key: "speed", label: "Speed (mph, optional)", placeholder: "e.g., 6.5", inputMode: "decimal", required: false }
+      ]);
+    }
+
+    if (mid === "STAIR" || mid === "STEP") {
+      return base.concat([
+        { key: "level", label: "Level (optional)", placeholder: "e.g., 8", inputMode: "numeric", required: false }
+      ]);
+    }
+
+    if (mid === "BIKE" || mid === "SPIN" || mid === "ASSLT") {
+      return base.concat([
+        distanceMi,
+        { key: "resistance", label: "Resistance (optional)", placeholder: "e.g., 12", inputMode: "numeric", required: false }
+      ]);
+    }
+
+    if (mid === "ELIP" || mid === "ARC") {
+      return base.concat([
+        distanceMi,
+        { key: "resistance", label: "Resistance (optional)", placeholder: "e.g., 10", inputMode: "numeric", required: false },
+        { key: "incline", label: "Incline % (optional)", placeholder: "e.g., 8", inputMode: "decimal", required: false }
+      ]);
+    }
+
+    if (mid === "ROW") {
+      return base.concat([
+        distanceM,
+        { key: "pace", label: "Avg pace (optional)", placeholder: "e.g., 2:05 /500m", inputMode: "text", required: false }
+      ]);
+    }
+
+    if (mid === "SKIER") {
+      return base.concat([ distanceM ]);
+    }
+
+    // Fallback
+    return base.concat([distanceMi]);
+  }
+
+  /* ---------- Rest Seconds storage (per gym + machine) ---------- */
+  function restKeyFor(gid, mid) {
+    return `scanliftlog_restseconds_v1:${gid}:${mid}`;
+  }
+  function loadRestSeconds() {
+    if (!machineId) return 120;
+    const raw = localStorage.getItem(restKeyFor(gymId, machineId));
+    const n = raw == null ? null : Number(raw);
+    return (n != null && Number.isFinite(n) && n >= 0) ? n : 120;
+  }
+  function saveRestSeconds(v) {
+    if (!machineId) return;
+    const n = Number(v);
+    if (!Number.isFinite(n) || n < 0) return;
+    localStorage.setItem(restKeyFor(gymId, machineId), String(Math.floor(n)));
+  }
+
+  /* ---------- Storage: workouts per user+machine ---------- */
+  function storageKeyFor(mid) {
+    return `scanliftlog_workouts_v1:${userId}:${mid}`;
+  }
+  function loadWorkouts() {
+    if (!machineId) return [];
+    return safeJSONParse(localStorage.getItem(storageKeyFor(machineId)) || "[]", []);
+  }
+  function saveWorkouts(arr) {
+    if (!machineId) return;
+    localStorage.setItem(storageKeyFor(machineId), JSON.stringify(arr));
+  }
+
+  /* ---------- Download Data ---------- */
+  function downloadData() {
+    const all = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.startsWith("scanliftlog_workouts_v1:")) {
+        all.push({ key: k, value: safeJSONParse(localStorage.getItem(k) || "null", null) });
+      }
+      if (k === USER_KEY) {
+        all.push({ key: k, value: localStorage.getItem(k) });
+      }
+    }
+
+    const payload = {
+      exportedAt: nowReadable(),
+      gymId,
+      gymName,
+      userId,
+      currentMachineId: machineId,
+      data: all
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `scanliftlog_export_${gymId}_${userId.slice(0,8)}_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  /* ---------- Upload / Import Data ---------- */
+  function isWorkoutKey(k) {
+    return typeof k === "string" && k.startsWith("scanliftlog_workouts_v1:");
+  }
+
+  function importDataFromObject(obj) {
+    if (!obj || typeof obj !== "object") {
+      throw new Error("Invalid file: not a JSON object.");
+    }
+    if (!Array.isArray(obj.data)) {
+      throw new Error("Invalid file: missing 'data' array.");
+    }
+
+    // Filter to only keys we allow importing (safety)
+    const incoming = obj.data
+      .filter(x => x && typeof x.key === "string")
+      .filter(x => x.key === USER_KEY || isWorkoutKey(x.key));
+
+    if (!incoming.length) {
+      throw new Error("No ScanLiftLog data found in this file.");
+    }
+
+    // Confirm overwrite if there is existing data
+    const existingRelevantKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k === USER_KEY || isWorkoutKey(k)) existingRelevantKeys.push(k);
+    }
+
+    const willOverwrite = incoming.some(x => localStorage.getItem(x.key) !== null);
+    const hasExisting = existingRelevantKeys.length > 0;
+
+    let ok = true;
+    if (hasExisting || willOverwrite) {
+      ok = confirm(
+        "This will import your ScanLiftLog data onto this device.\n\n" +
+        "If you already have ScanLiftLog data here, it may be overwritten.\n\n" +
+        "Continue?"
+      );
+    } else {
+      ok = confirm("Import ScanLiftLog data from this file onto this device?");
+    }
+
+    if (!ok) return false;
+
+    // Apply incoming data
+    for (const item of incoming) {
+      if (item.key === USER_KEY) {
+        // USER_KEY is stored as a plain string
+        const v = (typeof item.value === "string") ? item.value : String(item.value || "");
+        if (v) localStorage.setItem(USER_KEY, v);
+        continue;
+      }
+
+      // workout keys stored as JSON strings
+      localStorage.setItem(item.key, JSON.stringify(item.value ?? null));
+    }
+
+    return true;
+  }
+
+  function handleUploadFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Could not read file."));
+      reader.onload = () => {
+        try {
+          const text = String(reader.result || "");
+          const obj = JSON.parse(text);
+          const didImport = importDataFromObject(obj);
+          resolve(didImport);
+        } catch (e) {
+          reject(e instanceof Error ? e : new Error("Invalid JSON file."));
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  /* ---------- UI Elements ---------- */
+  const setsContainer = document.getElementById('setsContainer');
+  const dateInput = document.getElementById('dateInput');
+  const notesInput = document.getElementById('notesInput');
+  const exerciseInput = document.getElementById('exerciseInput');
+
+  const strengthSection = document.getElementById('strengthSection');
+  const cardioSection = document.getElementById('cardioSection');
+  const cardioFieldsRow1 = document.getElementById('cardioFieldsRow1');
+  const cardioFieldsRow2 = document.getElementById('cardioFieldsRow2');
+
+  let cardioInputs = {}; // { key: HTMLInputElement }
+
+  /* ---------- Strength: Sets UI ---------- */
+  function createSetRow(setIndex, weight="", reps="") {
+    const row = document.createElement('div');
+    row.className = 'setRow';
+    row.dataset.index = String(setIndex);
+
+    const badge = document.createElement('div');
+    badge.className = 'setBadge';
+    badge.textContent = String(setIndex + 1);
+
+    const w = document.createElement('input');
+    w.placeholder = 'e.g., 180';
+    w.inputMode = 'decimal';
+    w.value = weight;
+
+    const r = document.createElement('input');
+    r.placeholder = 'e.g., 10';
+    r.inputMode = 'numeric';
+    r.value = reps;
+
+    function maybeTriggerRestOnReps() {
+  if (r.value.trim()) {
+    const secs = getRestSecondsSetting();
+    if (secs > 0) startRestTimer(secs);
+  }
+}
+
+// Trigger as soon as reps are typed (no need to leave the field)
+r.addEventListener("input", maybeTriggerRestOnReps);
+
+
+    const del = document.createElement('button');
+    del.className = 'iconBtn danger';
+    del.type = 'button';
+    del.textContent = '−';
+    del.title = 'Remove set';
+    del.onclick = () => {
+      row.remove();
+      renumberSets();
+    };
+
+    row.appendChild(badge);
+    row.appendChild(w);
+    row.appendChild(r);
+    row.appendChild(del);
+    return row;
+  }
+
+  function renumberSets() {
+    const rows = Array.from(setsContainer.querySelectorAll('.setRow'));
+    rows.forEach((row, i) => {
+      row.dataset.index = String(i);
+      row.querySelector('.setBadge').textContent = String(i + 1);
+    });
+  }
+
+  function addSet(weight="", reps="") {
+    const idx = setsContainer.querySelectorAll('.setRow').length;
+    setsContainer.appendChild(createSetRow(idx, weight, reps));
+  }
+
+  function clearCurrentSets() {
+    setsContainer.innerHTML = "";
+    addSet("", "");
+    addSet("", "");
+    addSet("", "");
+  }
+
+  function readCurrentSets() {
+    const rows = Array.from(setsContainer.querySelectorAll('.setRow'));
+    const sets = rows.map(row => {
+      const inputs = row.querySelectorAll('input');
+      return {
+        weight: (inputs[0].value || "").trim(),
+        reps: (inputs[1].value || "").trim()
+      };
+    }).filter(s => s.weight || s.reps);
+    return sets;
+  }
+
+  /* ---------- Cardio: UI + Read ---------- */
+  function clearCardioInputs() {
+    Object.values(cardioInputs).forEach(inp => { inp.value = ""; });
+  }
+
+  function buildCardioInputs() {
+    cardioInputs = {};
+    cardioFieldsRow1.innerHTML = "";
+    cardioFieldsRow2.innerHTML = "";
+
+    const defs = getCardioFieldDefs(machineId);
+    // Split defs into two rows for layout
+    const row1 = defs.slice(0, Math.ceil(defs.length / 2));
+    const row2 = defs.slice(Math.ceil(defs.length / 2));
+
+    function addField(rowEl, def) {
+      const col = document.createElement("div");
+      col.className = "col";
+
+      const lab = document.createElement("label");
+      lab.textContent = def.label;
+
+      const inp = document.createElement("input");
+      inp.id = `cardio_${def.key}`;
+      inp.placeholder = def.placeholder || "";
+      inp.inputMode = def.inputMode === "text" ? undefined : (def.inputMode || "text");
+      inp.type = "text";
+
+      col.appendChild(lab);
+      col.appendChild(inp);
+      rowEl.appendChild(col);
+
+      cardioInputs[def.key] = inp;
+    }
+
+    row1.forEach(def => addField(cardioFieldsRow1, def));
+    row2.forEach(def => addField(cardioFieldsRow2, def));
+  }
+
+  function readCardioData() {
+    const defs = getCardioFieldDefs(machineId);
+    const data = {};
+
+    for (const def of defs) {
+      const inp = cardioInputs[def.key];
+      const raw = (inp && inp.value != null) ? String(inp.value).trim() : "";
+
+      if (def.required && !raw) {
+        return { ok: false, error: `Please enter ${def.label}.` };
+      }
+
+      // Store numeric fields as numbers when possible; keep "pace" as string
+      if (def.key === "pace") {
+        if (raw) data[def.key] = raw;
+        continue;
+      }
+
+      const num = toNumberOrNull(raw);
+      if (raw && num === null) {
+        // If they typed something non-numeric for numeric field
+        return { ok: false, error: `Please enter a valid number for ${def.label}.` };
+      }
+      if (num !== null) data[def.key] = num;
+    }
+
+    return { ok: true, data };
+  }
+
+  function setModeUI() {
+    if (!machineId) {
+      strengthSection.style.display = "";
+      cardioSection.style.display = "none";
+      return;
+    }
+
+    if (machineType === "cardio") {
+      strengthSection.style.display = "none";
+      cardioSection.style.display = "";
+      buildCardioInputs();
+    } else {
+      strengthSection.style.display = "";
+      cardioSection.style.display = "none";
+    }
+  }
+
+  /* ---------- History rendering ---------- */
+  function getTopSet(sets) {
+    let best = null;
+    let bestW = -Infinity;
+    for (const s of sets) {
+      const w = parseFloat(String(s.weight).replace(/[^0-9.]/g,''));
+      if (!Number.isNaN(w) && w > bestW) { bestW = w; best = s; }
+    }
+    return best || sets[0] || null;
+  }
+
+  function formatCardioSummary(c) {
+    if (!c) return "—";
+    const parts = [];
+    if (c.minutes != null) parts.push(`${c.minutes} min`);
+    if (c.distance != null) parts.push(`${c.distance} mi`);
+    if (c.distance_m != null) parts.push(`${c.distance_m} m`);
+    if (c.calories != null) parts.push(`${c.calories} cal`);
+    if (!parts.length) return "—";
+    return parts.join(" • ");
+  }
+
+  function renderHistory() {
+    const tbody = document.getElementById('historyBody');
+    tbody.innerHTML = "";
+
+    const workouts = loadWorkouts();
+    if (!workouts.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="muted">No workouts saved yet.</td></tr>`;
+      return;
+    }
+
+    const sorted = workouts.slice().sort((a,b) => (b.ts||0) - (a.ts||0));
+    for (const w of sorted) {
+      const isCardio = !!w.cardio;
+      const typeLabel = isCardio ? "Cardio" : "Strength";
+
+      let summary = "—";
+      if (isCardio) {
+        summary = formatCardioSummary(w.cardio);
+      } else {
+        const top = getTopSet(w.sets || []);
+        summary = top ? `${escapeHtml(top.weight || "—")} x ${escapeHtml(top.reps || "—")}` : "—";
+      }
+
+      const tr = document.createElement('tr');
+
+      // Build details section
+      let detailsHtml = `<details><summary>View</summary>`;
+
+      if (w.exercise) detailsHtml += `<div class="muted" style="margin-top:6px;">Exercise: ${escapeHtml(w.exercise)}</div>`;
+      if (w.notes) detailsHtml += `<div class="muted" style="margin-top:6px;">Notes: ${escapeHtml(w.notes)}</div>`;
+
+      if (isCardio) {
+        const c = w.cardio || {};
+        const rows = [];
+        function addRow(label, val) {
+          if (val == null || val === "") return;
+          rows.push(`<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(String(val))}</td></tr>`);
+        }
+
+        addRow("Time (minutes)", c.minutes);
+        addRow("Calories", c.calories);
+        addRow("Distance (miles)", c.distance);
+        addRow("Distance (meters)", c.distance_m);
+        addRow("Incline %", c.incline);
+        addRow("Speed (mph)", c.speed);
+        addRow("Resistance", c.resistance);
+        addRow("Level", c.level);
+        addRow("Avg pace", c.pace);
+
+        detailsHtml += `
+          <table class="setsMini" style="margin-top:8px;">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>${rows.join("") || `<tr><td colspan="2" class="muted">No cardio details.</td></tr>`}</tbody>
+          </table>
+        `;
+      } else {
+        detailsHtml += `
+          <table class="setsMini" style="margin-top:8px;">
+            <thead><tr><th>Set</th><th>Weight</th><th>Reps</th></tr></thead>
+            <tbody>
+              ${(w.sets||[]).map((s,i)=>`
+                <tr><td>${i+1}</td><td>${escapeHtml(s.weight||"")}</td><td>${escapeHtml(s.reps||"")}</td></tr>
+              `).join("") || `<tr><td colspan="3" class="muted">No sets.</td></tr>`}
+            </tbody>
+          </table>
+        `;
+      }
+
+      detailsHtml += `</details>`;
+
+      tr.innerHTML = `
+        <td>${escapeHtml(w.date || "")}</td>
+        <td>${typeLabel}</td>
+        <td>${summary}</td>
+        <td>${detailsHtml}</td>
+        <td class="muted">${escapeHtml(w.savedAt || "")}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  /* ---------- Clear Current (strength vs cardio) ---------- */
+  function clearCurrent() {
+    if (machineType === "cardio") {
+      clearCardioInputs();
+    } else {
+      clearCurrentSets();
+    }
+  }
+
+  /* ---------- Wire up ---------- */
+  document.getElementById('year').textContent = String(new Date().getFullYear());
+  document.getElementById('gymPill').textContent = `Gym: ${gymName}`;
+  document.getElementById('machinePill').textContent = machineName;
+  document.getElementById('userPill').textContent = `User: ${userId.slice(0,8)}…`;
+  document.getElementById('historyScopeBadge').textContent = `Scope: ${machineId || "—"}`;
+  document.getElementById('resetUserBtn').addEventListener('click', resetUser);
+  document.getElementById('downloadBtn').addEventListener('click', downloadData);
+
+  const uploadBtn = document.getElementById('uploadBtn');
+  const uploadFileInput = document.getElementById('uploadFileInput');
+
+  uploadBtn.addEventListener('click', () => {
+    uploadFileInput.value = ""; // allow selecting same file twice
+    uploadFileInput.click();
+  });
+
+  uploadFileInput.addEventListener('change', async () => {
+    const file = uploadFileInput.files && uploadFileInput.files[0];
+    if (!file) return;
+
+    try {
+      const didImport = await handleUploadFile(file);
+      if (didImport) {
+        alert("Import complete. The page will now refresh.");
+        location.reload();
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Import failed.");
+    }
+  });
+
+  dateInput.value = todayISO();
+
+  document.getElementById('addSetBtn').addEventListener('click', () => addSet("", ""));
+  document.getElementById('clearCurrentBtn').addEventListener('click', clearCurrent);
+
+  // Rest Timer buttons + per-machine persistence
+  const restSecondsInput = document.getElementById("restSecondsInput");
+  const restStartBtn = document.getElementById("restStartBtn");
+  const restStopBtn = document.getElementById("restStopBtn");
+
+  if (restSecondsInput) {
+    const initialRest = loadRestSeconds();
+    restSecondsInput.value = String(initialRest);
+    setRestDisplay(initialRest);
+    setRestStatus("Ready", false);
+
+    restSecondsInput.addEventListener("change", () => {
+      const v = getRestSecondsSetting();
+      saveRestSeconds(v);
+      setRestDisplay(v);
+      setRestStatus("Ready", false);
+      stopRestTimer();
+    });
+  }
+
+  if (restStartBtn) {
+    restStartBtn.addEventListener("click", () => {
+      const secs = getRestSecondsSetting();
+      saveRestSeconds(secs);
+      startRestTimer(secs);
+    });
+  }
+
+  if (restStopBtn) {
+    restStopBtn.addEventListener("click", () => stopRestTimer());
+  }
+
+  document.getElementById('saveWorkoutBtn').addEventListener('click', () => {
+    if (!machineId) {
+      alert("Scan a machine QR code before saving a workout.");
+      return;
+    }
+
+    const date = (dateInput.value || todayISO()).trim();
+    const notes = (notesInput.value || "").trim();
+    const exercise = (exerciseInput.value || "").trim();
+
+    // CARDIO SAVE
+    if (machineType === "cardio") {
+      const res = readCardioData();
+      if (!res.ok) {
+        alert(res.error || "Please complete the cardio log.");
+        return;
+      }
+
+      const workouts = loadWorkouts();
+      workouts.push({
+        ts: Date.now(),
+        date,
+        exercise,
+        notes,
+        cardio: res.data,
+        savedAt: nowReadable()
+      });
+      saveWorkouts(workouts);
+
+      exerciseInput.value = "";
+      notesInput.value = "";
+      clearCardioInputs();
+      renderHistory();
+      return;
+    }
+
+    // STRENGTH SAVE
+    const sets = readCurrentSets();
+    if (!sets.length) {
+      alert("Add at least one set (weight and/or reps) before saving a workout.");
+      return;
+    }
+
+    const workouts = loadWorkouts();
+    workouts.push({
+      ts: Date.now(),
+      date,
+      exercise,
+      notes,
+      sets,
+      savedAt: nowReadable()
+    });
+    saveWorkouts(workouts);
+
+    exerciseInput.value = "";
+    notesInput.value = "";
+    clearCurrentSets();
+    renderHistory();
+  });
+
+  document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+    if (!confirm("Clear ALL history for this machine on this device?")) return;
+    saveWorkouts([]);
+    renderHistory();
+  });
+
+  /* Init */
+  setModeUI();
+  if (machineType !== "cardio") {
+    clearCurrentSets(); // 3 sets on load
+  } else {
+    clearCardioInputs();
+  }
+  renderHistory();
+</script>
+</body>
+</html>
