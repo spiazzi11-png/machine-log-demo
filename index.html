@@ -250,7 +250,7 @@
       </div>
 
       <!-- Exercise field (moved inside card, under Notes) -->
-      <div class="row" style="align-items:flex-end; margin-top:12px;">
+      <div class="row" id="exerciseRow" style="align-items:flex-end; margin-top:12px;">
         <div class="col">
           <label>Exercise (optional)</label>
           <input id="exerciseInput" placeholder="e.g., Dumbbell Flys, DB Press, Incline DB Row" />
@@ -559,7 +559,8 @@ try {
   const userId = getOrCreateUserId();
   const ctx = parseContextFromUrl();
   const gymId = ctx.gymId;
-  const machineId = ctx.machineId;
+  // Default to a demo machine so the name is always shown when testing.
+  const machineId = ctx.machineId || "LEGPR";
 
   /* ---------- Gym Map (optional display names) ---------- */
   const GYM_MAP = {
@@ -908,6 +909,7 @@ try {
   const dateInput = document.getElementById('dateInput');
   const notesInput = document.getElementById('notesInput');
   const exerciseInput = document.getElementById('exerciseInput');
+  const exerciseRow = document.getElementById('exerciseRow');
 
   const strengthSection = document.getElementById('strengthSection');
   const cardioSection = document.getElementById('cardioSection');
@@ -1074,10 +1076,15 @@ r.addEventListener("input", maybeTriggerRestOnReps);
     if (machineType === "cardio") {
       strengthSection.style.display = "none";
       cardioSection.style.display = "";
+      if (exerciseRow) exerciseRow.style.display = "none";
+      if (exerciseInput) exerciseInput.value = "";
+      if (notesInput) notesInput.placeholder = "e.g., steady pace, interval session, heart rate zone 2";
       buildCardioInputs();
     } else {
       strengthSection.style.display = "";
       cardioSection.style.display = "none";
+      if (exerciseRow) exerciseRow.style.display = "";
+      if (notesInput) notesInput.placeholder = "e.g., controlled reps, last set to failure";
     }
   }
 
