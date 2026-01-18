@@ -29,7 +29,7 @@
     .top { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; }
     h1 { margin:0; font-size: 22px; letter-spacing: .2px; }
     .sub { margin:6px 0 0; color:var(--muted); font-size: 13px; }
-    .pills { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .pills { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
     .pill { font-size:12px; padding:8px 12px; border:1px solid var(--line); background: rgba(255,255,255,.03); border-radius:999px; }
     .pill.context { border-color: rgba(139,92,246,.55); background: rgba(139,92,246,.18); font-weight:800; color:var(--text); }
     .card { margin-top:16px; background: rgba(18,19,24,.66); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow: var(--shadow); }
@@ -214,8 +214,6 @@
         </div>
 
         <div class="pills">
-          <div class="pill context" id="gymPill">Gym: …</div>
-          <div class="pill context" id="machinePill">Loading…</div>
           <div class="pill" id="userPill">User: …</div>
           <div class="pill"><button class="pillBtn" id="downloadBtn" type="button">Download Data</button></div>
           <div class="pill"><button class="pillBtn" id="uploadBtn" type="button">Upload Data</button></div>
@@ -1202,8 +1200,6 @@ r.addEventListener("input", maybeTriggerRestOnReps);
 
   /* ---------- Wire up ---------- */
   document.getElementById('year').textContent = String(new Date().getFullYear());
-  document.getElementById('gymPill').textContent = `Gym: ${gymName}`;
-  document.getElementById('machinePill').textContent = machineName;
   document.getElementById('gymNameText').textContent = gymName;
   document.getElementById('machineNameText').textContent = machineName;
   document.getElementById('userPill').textContent = `User: ${userId.slice(0,8)}…`;
