@@ -1,179 +1,50 @@
+<!doctype html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ScanLiftLog</title>
   <style>
-    :root {
-      --bg:#0b0c10;
-      --panel:#121318;
-      --panel2:#0f1015;
-      --text:#e9e9ee;
-      --muted:#a9a9b6;
-      --line:rgba(255,255,255,.10);
-      --accent:#8b5cf6;
-      --accent2:#22c55e;
-      --shadow:0 10px 40px rgba(0,0,0,.35);
-      --radius:18px;
-      --radius2:26px;
-    }
-    body {
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background:
-        radial-gradient(1000px 600px at 20% 0%, rgba(139,92,246,.22), transparent 60%),
-        radial-gradient(900px 600px at 90% 10%, rgba(34,197,94,.14), transparent 55%),
-        linear-gradient(180deg, #07080c 0%, #0b0c10 70%, #07080c 100%);
-      color:var(--text);
-    }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 22px; }
-    .top { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; }
-    h1 { margin:0; font-size: 22px; letter-spacing: .2px; }
-    .sub { margin:6px 0 0; color:var(--muted); font-size: 13px; }
-    .pills { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-    .pill { font-size:12px; padding:8px 12px; border:1px solid var(--line); background: rgba(255,255,255,.03); border-radius:999px; }
-    .pill.context { border-color: rgba(139,92,246,.55); background: rgba(139,92,246,.18); font-weight:800; color:var(--text); }
-    .card { margin-top:16px; background: rgba(18,19,24,.66); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow: var(--shadow); }
-    .card.headerCard { margin-top:14px; padding:18px; background: rgba(18,19,24,.78); border-radius: var(--radius2); }
-    label { display:block; font-size: 12px; color:var(--muted); margin: 0 0 6px; }
-    input, select {
-      width: 100%;
-      box-sizing:border-box;
-      padding:10px 12px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      font-size:14px;
-      background: rgba(255,255,255,.03);
-      color:var(--text);
-    }
-    input::placeholder { color: rgba(233,233,238,.55); }
-    input:focus, select:focus {
-      outline:none;
-      border-color: rgba(139,92,246,.55);
-      box-shadow: 0 0 0 2px rgba(139,92,246,.22);
-    }
-    button {
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      cursor:pointer;
-      font-weight:800;
-    }
-    button.primary {
-      border-color: rgba(139,92,246,.55);
-      background: linear-gradient(135deg, rgba(139,92,246,.95), rgba(139,92,246,.55));
-      color:#fff;
-    }
-    button.danger {
-      border-color: rgba(239,68,68,.45);
-      background: linear-gradient(135deg, rgba(239,68,68,.90), rgba(239,68,68,.55));
-      color:#fff;
-    }
+    :root { --b:#111; --g:#666; --l:#e7e7e7; --bg:#fafafa; --card:#fff; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--b); }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 18px; }
+    .top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    h1 { margin:0; font-size: 20px; letter-spacing: .2px; }
+    .sub { margin:6px 0 0; color:var(--g); font-size: 13px; }
+    .pills { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill { font-size:12px; padding:8px 10px; border:1px solid var(--l); background:#fff; border-radius:999px; }
+    .card { margin-top:14px; background:var(--card); border:1px solid var(--l); border-radius:14px; padding:14px; }
+    label { display:block; font-size: 12px; color:var(--g); margin: 0 0 6px; }
+    input, select { width: 100%; box-sizing:border-box; padding:10px 12px; border:1px solid #ddd; border-radius:12px; font-size:14px; background:#fff; }
+    button { padding:10px 12px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; }
+    button.primary { border:0; background:#111; color:#fff; }
+    button.danger { border:0; background:#b00020; color:#fff; }
     .btnrow { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .row { display:flex; gap:12px; flex-wrap:wrap; }
     .col { flex:1; min-width: 220px; }
-    .muted { color:var(--muted); font-size:12px; }
-    .hr { height:1px; background:var(--line); margin:14px 0; }
+    .muted { color:var(--g); font-size:12px; }
+    .hr { height:1px; background:var(--l); margin:14px 0; }
     .smalllink { border:0; background:transparent; text-decoration:underline; cursor:pointer; font-size:12px; opacity:0.75; padding:0; font-weight:700; }
-    .badge { display:inline-block; font-size:11px; padding:4px 8px; border:1px solid var(--line); border-radius:999px; background: rgba(255,255,255,.04); color:var(--muted); }
-
-    /* App nav (matches marketing site) */
-    .appNav {
-      position:sticky;
-      top:0;
-      z-index:30;
-      backdrop-filter: blur(10px);
-      background: rgba(11,12,16,.72);
-      border-bottom:1px solid var(--line);
-    }
-    .appNavInner {
-      max-width: 980px;
-      margin: 0 auto;
-      padding:12px 22px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-    .brand {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:800;
-      letter-spacing:.2px;
-    }
-    .logo {
-      width:28px;
-      height:28px;
-      border-radius:10px;
-      background:
-        radial-gradient(circle at 30% 30%, rgba(255,255,255,.20), transparent 55%),
-        linear-gradient(135deg, rgba(139,92,246,.95), rgba(34,197,94,.85));
-      box-shadow: var(--shadow);
-    }
-    .brandBadge {
-      font-size:11px;
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.04);
-      color:var(--muted);
-      font-weight:800;
-    }
-    .navLinks {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .navLink {
-      text-decoration:none;
-      color:var(--muted);
-      padding:6px 8px;
-      border-radius:10px;
-      border:1px solid transparent;
-      font-weight:700;
-      font-size:12px;
-    }
-    .navLink:hover {
-      color:var(--text);
-      border-color:var(--line);
-      background: rgba(255,255,255,.04);
-    }
-    .navCta {
-      text-decoration:none;
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid rgba(139,92,246,.55);
-      background: rgba(139,92,246,.18);
-      color:var(--text);
-      font-weight:800;
-      font-size:12px;
-    }
-
-    /* Context bar (Gym / Machine emphasis) */
-    .contextBar { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
-    .contextItem { flex:1; min-width:220px; padding:12px 14px; border-radius:14px; background: rgba(255,255,255,.03); border:1px solid var(--line); }
-    .contextLabel { font-size:11px; text-transform:uppercase; letter-spacing:.9px; color:var(--muted); font-weight:800; }
-    .contextValue { margin-top:4px; font-size:20px; font-weight:900; color:var(--text); }
+    .badge { display:inline-block; font-size:11px; padding:4px 8px; border:1px solid var(--l); border-radius:999px; background:#fff; color:var(--g); }
+    .statusBanner { margin-top:12px; padding:10px 12px; border-radius:12px; border:1px solid #f3b3b8; background:#fff5f6; color:#7a0b16; font-size:12px; font-weight:800; }
+    .card.disabled { opacity:.6; pointer-events:none; }
 
     /* Sets grid */
     .setsHeader { display:grid; grid-template-columns: 52px 1fr 1fr 60px; gap:10px; align-items:center; margin-top:10px; }
     .setRow { display:grid; grid-template-columns: 52px 1fr 1fr 60px; gap:10px; align-items:center; margin-top:10px; }
-    .setBadge { display:inline-flex; align-items:center; justify-content:center; width:48px; height:40px; border:1px solid var(--line); border-radius:12px; background: rgba(255,255,255,.04); font-weight:900; }
-    .iconBtn { width:44px; height:40px; border-radius:12px; border:1px solid rgba(255,255,255,.14); display:inline-flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; background: rgba(255,255,255,.06); color:var(--text); }
-    .iconBtn.primary { border-color: rgba(139,92,246,.55); background: linear-gradient(135deg, rgba(139,92,246,.95), rgba(139,92,246,.55)); color:#fff; }
-    .iconBtn.danger { border-color: rgba(239,68,68,.45); background: linear-gradient(135deg, rgba(239,68,68,.90), rgba(239,68,68,.55)); color:#fff; }
+    .setBadge { display:inline-flex; align-items:center; justify-content:center; width:48px; height:40px; border:1px solid var(--l); border-radius:12px; background:#fff; font-weight:900; }
+    .iconBtn { width:44px; height:40px; border-radius:12px; border:1px solid #ddd; display:inline-flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; background:#fff; }
+    .iconBtn.primary { background:#111; color:#fff; border:0; }
+    .iconBtn.danger { background:#b00020; color:#fff; border:0; }
 
     /* History */
     table { width:100%; border-collapse:collapse; }
-    th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); font-size: 13px; vertical-align:top; }
-    th { color:var(--muted); font-weight:900; font-size:12px; }
+    th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--l); font-size: 13px; vertical-align:top; }
+    th { color:var(--g); font-weight:900; font-size:12px; }
     details summary { cursor:pointer; font-weight:900; }
     .setsMini { margin-top:8px; width:100%; border-collapse:collapse; }
-    .setsMini td, .setsMini th { font-size: 12px; padding:6px 6px; border-bottom:1px solid var(--line); }
-    footer { margin:16px 0 6px; text-align:center; color:var(--muted); font-size:12px; }
+    .setsMini td, .setsMini th { font-size: 12px; padding:6px 6px; border-bottom:1px solid var(--l); }
+    footer { margin:16px 0 6px; text-align:center; color:var(--g); font-size:12px; }
     footer a { color:inherit; }
 
     /* Tiny helper button inside pills */
@@ -184,7 +55,7 @@
 
     /* Rest status emphasis */
     #restStatus.go {
-      color:var(--accent2);
+      color:#b00020;
       font-size:20px;
       font-weight:900;
       letter-spacing:.4px;
@@ -192,50 +63,27 @@
   </style>
 </head>
 <body>
-  <div class="appNav">
-    <div class="appNavInner">
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>ScanLiftLog</div>
-        <div class="brandBadge">App</div>
-      </div>
-      <div class="navLinks">
-        <a class="navLink" href="https://spiazzi11-png.github.io/scanliftlog/" target="_blank" rel="noopener">Home</a>
-        <a class="navCta" href="#logger">Log Workout</a>
-      </div>
-    </div>
-  </div>
   <div class="wrap">
-    <div class="card headerCard">
-      <div class="top">
-        <div>
-          <h1>ScanLiftLog</h1>
-          <div class="sub" id="subLine">Scan a machine QR code to view and log your workout history.</div>
-        </div>
-
-        <div class="pills">
-          <div class="pill" id="userPill">User: …</div>
-          <div class="pill"><button class="pillBtn" id="downloadBtn" type="button">Download Data</button></div>
-          <div class="pill"><button class="pillBtn" id="uploadBtn" type="button">Upload Data</button></div>
-          <input id="uploadFileInput" type="file" accept="application/json,.json" style="display:none;" />
-          <div class="pill"><button class="pillBtn" id="resetUserBtn" type="button">Reset User ID</button></div>
-        </div>
+    <div class="top">
+      <div>
+        <h1>ScanLiftLog</h1>
+        <div class="sub" id="subLine">Scan a machine QR code to view and log your workout history.</div>
       </div>
 
-      <div class="contextBar">
-        <div class="contextItem">
-          <div class="contextLabel">Gym Name</div>
-          <div class="contextValue" id="gymNameText">…</div>
-        </div>
-        <div class="contextItem">
-          <div class="contextLabel">Machine Name</div>
-          <div class="contextValue" id="machineNameText">…</div>
-        </div>
+      <div class="pills">
+        <div class="pill" id="gymPill">Gym: …</div>
+        <div class="pill" id="machinePill">Loading…</div>
+        <div class="pill" id="userPill">User: …</div>
+        <div class="pill"><button class="pillBtn" id="downloadBtn" type="button">Download Data</button></div>
+        <div class="pill"><button class="pillBtn" id="uploadBtn" type="button">Upload Data</button></div>
+        <input id="uploadFileInput" type="file" accept="application/json,.json" style="display:none;" />
+        <div class="pill"><button class="pillBtn" id="resetUserBtn" type="button">Reset User ID</button></div>
       </div>
     </div>
+    <div class="statusBanner" id="gymStatusBanner" style="display:none;"></div>
 
     <!-- Logger -->
-    <div class="card" id="logger">
+    <div class="card" id="loggerCard">
       <div class="row" style="align-items:flex-end;">
         <div class="col">
           <label>Date</label>
@@ -248,7 +96,7 @@
       </div>
 
       <!-- Exercise field (moved inside card, under Notes) -->
-      <div class="row" id="exerciseRow" style="align-items:flex-end; margin-top:12px;">
+      <div class="row" style="align-items:flex-end; margin-top:12px;">
         <div class="col">
           <label>Exercise (optional)</label>
           <input id="exerciseInput" placeholder="e.g., Dumbbell Flys, DB Press, Incline DB Row" />
@@ -316,7 +164,7 @@
     </div>
 
     <!-- History -->
-    <div class="card">
+    <div class="card" id="historyCard">
       <div class="row" style="align-items:center; justify-content:space-between;">
         <div style="font-weight:900;">History</div>
         <div class="badge" id="historyScopeBadge">Scope: …</div>
@@ -410,7 +258,6 @@
 
         // Vibrate (mobile)
 try { navigator.vibrate && navigator.vibrate([150, 75, 150]); } catch {}
-
 
 // Audio beep
 try {
@@ -557,8 +404,7 @@ try {
   const userId = getOrCreateUserId();
   const ctx = parseContextFromUrl();
   const gymId = ctx.gymId;
-  // Default to a demo machine so the name is always shown when testing.
-  const machineId = ctx.machineId || "LEGPR";
+  const machineId = ctx.machineId;
 
   /* ---------- Gym Map (optional display names) ---------- */
   const GYM_MAP = {
@@ -568,6 +414,15 @@ try {
     // "smithtown": "Smithtown Fitness"
   };
   const gymName = GYM_MAP[gymId] || gymId.toUpperCase();
+
+  /* ---------- Gym Status (ACTIVE / DISABLED) ---------- */
+  const GYM_STATUS = {
+    "main": "ACTIVE"
+    // Example:
+    // "canceledgym": "DISABLED"
+  };
+  const gymStatus = String(GYM_STATUS[gymId] || "ACTIVE").toUpperCase();
+  const isGymActive = gymStatus === "ACTIVE";
 
   /* ---------- Machine Map (expanded) ---------- */
   const MACHINE_MAP = {
@@ -907,7 +762,9 @@ try {
   const dateInput = document.getElementById('dateInput');
   const notesInput = document.getElementById('notesInput');
   const exerciseInput = document.getElementById('exerciseInput');
-  const exerciseRow = document.getElementById('exerciseRow');
+  const gymStatusBanner = document.getElementById('gymStatusBanner');
+  const loggerCard = document.getElementById('loggerCard');
+  const historyCard = document.getElementById('historyCard');
 
   const strengthSection = document.getElementById('strengthSection');
   const cardioSection = document.getElementById('cardioSection');
@@ -1074,16 +931,32 @@ r.addEventListener("input", maybeTriggerRestOnReps);
     if (machineType === "cardio") {
       strengthSection.style.display = "none";
       cardioSection.style.display = "";
-      if (exerciseRow) exerciseRow.style.display = "none";
-      if (exerciseInput) exerciseInput.value = "";
-      if (notesInput) notesInput.placeholder = "e.g., steady pace, interval session, heart rate zone 2";
       buildCardioInputs();
     } else {
       strengthSection.style.display = "";
       cardioSection.style.display = "none";
-      if (exerciseRow) exerciseRow.style.display = "";
-      if (notesInput) notesInput.placeholder = "e.g., controlled reps, last set to failure";
     }
+  }
+
+  function applyGymStatusUI() {
+    if (isGymActive) {
+      if (gymStatusBanner) gymStatusBanner.style.display = "none";
+      if (loggerCard) loggerCard.classList.remove("disabled");
+      if (historyCard) historyCard.classList.remove("disabled");
+      return;
+    }
+
+    if (gymStatusBanner) {
+      gymStatusBanner.textContent = "This gym’s ScanLiftLog service is inactive. Please speak with a gym representative to restart this service.";
+      gymStatusBanner.style.display = "block";
+    }
+    if (loggerCard) loggerCard.classList.add("disabled");
+    if (historyCard) historyCard.classList.add("disabled");
+
+    const controls = document.querySelectorAll("input, select, button");
+    controls.forEach((el) => {
+      el.disabled = true;
+    });
   }
 
   /* ---------- History rendering ---------- */
@@ -1200,8 +1073,8 @@ r.addEventListener("input", maybeTriggerRestOnReps);
 
   /* ---------- Wire up ---------- */
   document.getElementById('year').textContent = String(new Date().getFullYear());
-  document.getElementById('gymNameText').textContent = gymName;
-  document.getElementById('machineNameText').textContent = machineName;
+  document.getElementById('gymPill').textContent = `Gym: ${gymName}`;
+  document.getElementById('machinePill').textContent = machineName;
   document.getElementById('userPill').textContent = `User: ${userId.slice(0,8)}…`;
   document.getElementById('historyScopeBadge').textContent = `Scope: ${machineId || "—"}`;
   document.getElementById('resetUserBtn').addEventListener('click', resetUser);
@@ -1334,6 +1207,7 @@ r.addEventListener("input", maybeTriggerRestOnReps);
   });
 
   /* Init */
+  applyGymStatusUI();
   setModeUI();
   if (machineType !== "cardio") {
     clearCurrentSets(); // 3 sets on load
